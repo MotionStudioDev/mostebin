@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mostebin | Kod Paylaşım</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <style>
+        :root { 
+            --bg: #0b0e14; 
+            --panel: #151921; 
+            --accent: #ff79c6; 
+            --text: #f8f8f2; 
+            --line-num: #6272a4; 
+        }
+
+        * { box-sizing: border-box; }
+
+        body { 
+            margin: 0; 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: 'Fira Code', 'Consolas', monospace; 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* --- YAN PANEL (SIDEBAR) --- */
+        .sidebar { 
+            width: 65px; 
+            background: var(--panel); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 20px 0; 
+            border-right: 1px solid #282a36; 
+            z-index: 100; 
+        }
+
+        .top-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .btn { 
+            color: var(--line-num); 
+            font-size: 22px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            position: relative; 
+        }
+
+        .btn:hover { color: var(--accent); transform: scale(1.1); }
+
+        /* Tooltip */
+        .btn::after { 
+            content: attr(data-label); 
+            position: absolute; 
+            left: 55px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            background: #44475a; 
+            font-size: 12px; 
+            padding: 5px 10px; 
+            border-radius: 4px; 
+            visibility: hidden; 
+            white-space: nowrap; 
+            color: white; 
+        }
+        .btn:hover::after { visibility: visible; }
+
+        /* MotionStudio Logo Alanı */
+        .brand-name {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 13px;
+            letter-spacing: 3px;
+            opacity: 0.5;
+            text-transform: uppercase;
+            cursor: default;
+            transition: 0.3s;
+            margin-bottom: 10px;
+        }
+        .brand-name:hover { opacity: 1; text-shadow: 0 0 10px var(--accent); }
+
+        /* --- ANA EDİTÖR ALANI --- */
+        .editor-container { flex-grow: 1; display: flex; position: relative; overflow: hidden; }
+        
+        /* Satır Numaraları */
+        .line-numbers { 
+            width: 50px; 
+            padding: 25px 0; 
+            background: var(--bg); 
+            color: var(--line-num); 
+            text-align: right; 
+            padding-right: 10px; 
+            font-size: 14px; 
+            user-select: none; 
+            border-right: 1px solid #282a36; 
+            line-height: 1.6; 
+            overflow: hidden;
+        }
+
+        /* Input ve Viewer */
+        #codeEditor, #viewer { 
+            flex-grow: 1; 
+            padding: 25px; 
+            border: none; 
+            outline: none; 
+            font-size: 14px; 
+            font-family: inherit; 
+            line-height: 1.6; 
+            background: transparent; 
+            color: var(--text); 
+            resize: none; 
+            overflow-y: auto; 
+            overflow-x: auto; 
+            white-space: pre; 
+        }
+
+        #viewer { display: none; margin: 0; }
+        code { font-family: inherit !important; }
+
+        /* Rozetler ve Bildirimler */
+        .badge { 
+            position: absolute; 
+            top: 10px; 
+            right: 25px; 
+            background: #44475a; 
+            color: var(--accent); 
+            font-size: 10px; 
+            padding: 2px 8px; 
+            border-radius: 4px; 
+            letter-spacing: 1px; 
+            z-index: 10;
+        }
+
+        #toast { 
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            background: var(--accent); 
+            color: var(--bg); 
+            padding: 12px 25px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            transform: translateY(150%); 
+            transition: 0.4s; 
+            z-index: 1000; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="top-actions">
+            <div class="btn" data-label="Yeni (Ctrl+N)" onclick="newPaste()"><i class="fas fa-plus"></i></div>
+            <div class="btn" id="saveBtn" data-label="Kaydet (Ctrl+S)" onclick="savePaste()"><i class="fas fa-save"></i></div>
+            <div class="btn" id="editBtn" data-label="Düzenle" onclick="editPaste()" style="display:none;"><i class="fas fa-pen"></i></div>
+            <div class="btn" id="copyBtn" data-label="Kopyala" onclick="copyCode()" style="display:none;"><i class="fas fa-copy"></i></div>
+            <div class="btn" id="downloadBtn" data-label="İndir" onclick="downloadCode()" style="display:none;"><i class="fas fa-download"></i></div>
+        </div>
+        
+        <div class="brand-name">MotionStudio</div>
+    </div>
+
+    <div class="editor-container">
+        <div class="badge" id="langBadge">DRAFT</div>
+        <div class="line-numbers" id="lineNos">1</div>
+        <textarea id="codeEditor" spellcheck="false" placeholder="Kodunuzu buraya yapıştırın..." oninput="updateLineNumbers()" onscroll="syncScroll()"></textarea>
+        <pre id="viewer" onscroll="syncScroll()"><code id="codeBlock"></code></pre>
+    </div>
+
+    <div id="toast">Bildirim</div>
+
+<script>
+    const editor = document.getElementById('codeEditor');
+    const lineNos = document.getElementById('lineNos');
+    const viewer = document.getElementById('viewer');
+    const codeBlock = document.getElementById('codeBlock');
+    const langBadge = document.getElementById('langBadge');
+    const toast = document.getElementById('toast');
+
+    // Başlangıç Kontrolü
+    window.onload = checkUrl;
+    window.onhashchange = checkUrl;
+
+    function checkUrl() {
+        const id = window.location.hash.substring(1);
+        if (id && localStorage.getItem(id)) {
+            showHighlighted(localStorage.getItem(id));
+        } else {
+            newPaste();
+        }
+    }
+
+    function updateLineNumbers() {
+        const lines = editor.value.split('\n').length;
+        lineNos.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+    }
+
+    function syncScroll() {
+        const target = editor.style.display === 'none' ? viewer : editor;
+        lineNos.scrollTop = target.scrollTop;
+    }
+
+    function savePaste() {
+        const code = editor.value;
+        if (!code.trim()) return showToast("Önce bir şeyler yazmalısın!");
+
+        const id = Math.random().toString(36).substring(2, 10);
+        localStorage.setItem(id, code);
+        window.location.hash = id;
+        showHighlighted(code);
+        showToast("MotionStudio: Kaydedildi!");
+    }
+
+    function showHighlighted(code) {
+        editor.style.display = 'none';
+        viewer.style.display = 'block';
+        editor.value = code;
+        updateLineNumbers();
+
+        document.getElementById('saveBtn').style.display = 'none';
+        ['editBtn', 'copyBtn', 'downloadBtn'].forEach(id => document.getElementById(id).style.display = 'block');
+
+        codeBlock.textContent = code;
+        const result = hljs.highlightAuto(code);
+        codeBlock.innerHTML = result.value;
+        langBadge.innerText = (result.language || "text").toUpperCase();
+    }
+
+    function editPaste() {
+        editor.style.display = 'block';
+        viewer.style.display = 'none';
+        document.getElementById('saveBtn').style.display = 'block';
+        ['editBtn', 'copyBtn', 'downloadBtn'].forEach(id => document.getElementById(id).style.display = 'none');
+        langBadge.innerText = "EDITING";
+        editor.focus();
+    }
+
+    function newPaste() {
+        window.location.hash = "";
+        editor.value = "";
+        editPaste();
+        updateLineNumbers();
+    }
+
+    function copyCode() {
+        navigator.clipboard.writeText(editor.value);
+        showToast("Panoya Kopyalandı!");
+    }
+
+    function downloadCode() {
+        const blob = new Blob([editor.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `motion-code-${window.location.hash.substring(1)}.txt`;
+        a.click();
+    }
+
+    function showToast(msg) {
+        toast.innerText = msg;
+        toast.style.transform = "translateY(0)";
+        setTimeout(() => { toast.style.transform = "translateY(150%)"; }, 3000);
+    }
+
+    // Tab ve Kısayol Desteği
+    editor.addEventListener('keydown', e => {
+        if(e.key === 'Tab') {
+            e.preventDefault();
+            const start = editor.selectionStart;
+            editor.value = editor.value.substring(0, start) + "    " + editor.value.substring(editor.selectionEnd);
+            editor.selectionStart = editor.selectionEnd = start + 4;
+            updateLineNumbers();
+        }
+        if (e.ctrlKey && e.key === 's') { e.preventDefault(); savePaste(); }
+        if (e.ctrlKey && e.key === 'n') { e.preventDefault(); newPaste(); }
+    });
+</script>
+</body>
+</html>
