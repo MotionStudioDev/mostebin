@@ -16,9 +16,7 @@
             --text: #f8f8f2; 
             --line-num: #6272a4; 
         }
-
         * { box-sizing: border-box; }
-
         body { 
             margin: 0; 
             background: var(--bg); 
@@ -28,8 +26,6 @@
             height: 100vh; 
             overflow: hidden; 
         }
-
-        /* --- YAN PANEL (SIDEBAR) --- */
         .sidebar { 
             width: 65px; 
             background: var(--panel); 
@@ -41,14 +37,12 @@
             border-right: 1px solid #282a36; 
             z-index: 100; 
         }
-
         .top-actions {
             display: flex;
             flex-direction: column;
             gap: 25px;
             align-items: center;
         }
-
         .btn { 
             color: var(--line-num); 
             font-size: 22px; 
@@ -56,10 +50,7 @@
             transition: 0.2s; 
             position: relative; 
         }
-
         .btn:hover { color: var(--accent); transform: scale(1.1); }
-
-        /* Tooltip */
         .btn::after { 
             content: attr(data-label); 
             position: absolute; 
@@ -75,8 +66,6 @@
             color: white; 
         }
         .btn:hover::after { visibility: visible; }
-
-        /* MotionStudio Logo Alanı */
         .brand-name {
             writing-mode: vertical-rl;
             transform: rotate(180deg);
@@ -91,11 +80,7 @@
             margin-bottom: 10px;
         }
         .brand-name:hover { opacity: 1; text-shadow: 0 0 10px var(--accent); }
-
-        /* --- ANA EDİTÖR ALANI --- */
         .editor-container { flex-grow: 1; display: flex; position: relative; overflow: hidden; }
-        
-        /* Satır Numaraları */
         .line-numbers { 
             width: 50px; 
             padding: 25px 0; 
@@ -109,8 +94,6 @@
             line-height: 1.6; 
             overflow: hidden;
         }
-
-        /* Input ve Viewer */
         #codeEditor, #viewer { 
             flex-grow: 1; 
             padding: 25px; 
@@ -126,11 +109,8 @@
             overflow-x: auto; 
             white-space: pre; 
         }
-
         #viewer { display: none; margin: 0; }
         code { font-family: inherit !important; }
-
-        /* Rozetler ve Bildirimler */
         .badge { 
             position: absolute; 
             top: 10px; 
@@ -143,7 +123,6 @@
             letter-spacing: 1px; 
             z-index: 10;
         }
-
         #toast { 
             position: fixed; 
             bottom: 20px; 
@@ -158,7 +137,6 @@
             z-index: 1000; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
         }
-
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
     </style>
@@ -173,7 +151,6 @@
             <div class="btn" id="copyBtn" data-label="Kopyala" onclick="copyCode()" style="display:none;"><i class="fas fa-copy"></i></div>
             <div class="btn" id="downloadBtn" data-label="İndir" onclick="downloadCode()" style="display:none;"><i class="fas fa-download"></i></div>
         </div>
-        
         <div class="brand-name">MotionStudio</div>
     </div>
 
@@ -194,38 +171,53 @@
     const langBadge = document.getElementById('langBadge');
     const toast = document.getElementById('toast');
 
-    // Başlangıç Kontrolü
+    // API URL - Vercel üzerinde /api dizinine gider
+    const API_URL = "/api";
+
     window.onload = checkUrl;
     window.onhashchange = checkUrl;
 
-    function checkUrl() {
+    async function checkUrl() {
         const id = window.location.hash.substring(1);
-        if (id && localStorage.getItem(id)) {
-            showHighlighted(localStorage.getItem(id));
+        if (id && id.length > 2) {
+            showToast("Kod yükleniyor...");
+            try {
+                const res = await fetch(`${API_URL}/get/${id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    showHighlighted(data.content);
+                } else {
+                    showToast("Hata: Kod bulunamadı!");
+                    newPaste();
+                }
+            } catch (err) {
+                showToast("Bağlantı hatası!");
+            }
         } else {
             newPaste();
         }
     }
 
-    function updateLineNumbers() {
-        const lines = editor.value.split('\n').length;
-        lineNos.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
-    }
-
-    function syncScroll() {
-        const target = editor.style.display === 'none' ? viewer : editor;
-        lineNos.scrollTop = target.scrollTop;
-    }
-
-    function savePaste() {
+    async function savePaste() {
         const code = editor.value;
         if (!code.trim()) return showToast("Önce bir şeyler yazmalısın!");
-
-        const id = Math.random().toString(36).substring(2, 10);
-        localStorage.setItem(id, code);
-        window.location.hash = id;
-        showHighlighted(code);
-        showToast("MotionStudio: Kaydedildi!");
+        
+        showToast("Kaydediliyor...");
+        try {
+            const res = await fetch(`${API_URL}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: code })
+            });
+            const data = await res.json();
+            if (data.id) {
+                window.location.hash = data.id;
+                showHighlighted(code);
+                showToast("Başarıyla Kaydedildi!");
+            }
+        } catch (err) {
+            showToast("Kaydetme hatası!");
+        }
     }
 
     function showHighlighted(code) {
@@ -233,10 +225,8 @@
         viewer.style.display = 'block';
         editor.value = code;
         updateLineNumbers();
-
         document.getElementById('saveBtn').style.display = 'none';
         ['editBtn', 'copyBtn', 'downloadBtn'].forEach(id => document.getElementById(id).style.display = 'block');
-
         codeBlock.textContent = code;
         const result = hljs.highlightAuto(code);
         codeBlock.innerHTML = result.value;
@@ -253,10 +243,23 @@
     }
 
     function newPaste() {
-        window.location.hash = "";
+        if(window.location.hash) {
+            window.location.hash = "";
+            return;
+        }
         editor.value = "";
         editPaste();
         updateLineNumbers();
+    }
+
+    function updateLineNumbers() {
+        const lines = editor.value.split('\n').length;
+        lineNos.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+    }
+
+    function syncScroll() {
+        const target = editor.style.display === 'none' ? viewer : editor;
+        lineNos.scrollTop = target.scrollTop;
     }
 
     function copyCode() {
@@ -269,7 +272,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `motion-code-${window.location.hash.substring(1)}.txt`;
+        a.download = `code-${window.location.hash.substring(1) || 'new'}.txt`;
         a.click();
     }
 
@@ -279,7 +282,6 @@
         setTimeout(() => { toast.style.transform = "translateY(150%)"; }, 3000);
     }
 
-    // Tab ve Kısayol Desteği
     editor.addEventListener('keydown', e => {
         if(e.key === 'Tab') {
             e.preventDefault();
