@@ -1,26 +1,26 @@
+const { Redis } = require('@upstash/redis');
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Vercel'in otomatik bağladığı değişkeni kullanıyoruz
-mongoose.connect(process.env.MONGODB_URI);
+// Vercel'in otomatik tanımladığı değişkenleri kullanır
+const redis = Redis.fromEnv();
 
-const Paste = mongoose.model('Paste', { content: String, shortId: String });
-
+// Kaydetme
 app.post('/api/save', async (req, res) => {
     const shortId = Math.random().toString(36).substring(2, 10);
-    await new Paste({ content: req.body.content, shortId }).save();
+    await redis.set(shortId, req.body.content);
     res.json({ id: shortId });
 });
 
+// Getirme
 app.get('/api/get/:id', async (req, res) => {
-    const paste = await Paste.findOne({ shortId: req.params.id });
-    if (!paste) return res.status(404).json({ error: "Bulunamadı" });
-    res.json({ content: paste.content });
+    const content = await redis.get(req.params.id);
+    if (!content) return res.status(404).json({ error: "Kod bulunamadı" });
+    res.json({ content });
 });
 
 module.exports = app;
