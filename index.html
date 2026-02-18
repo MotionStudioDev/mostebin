@@ -1,298 +1,1290 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mostebin | Kod Paylaşım</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/dracula.min.css">
+    <title>Mostebin — Kod Paylaşım Platformu</title>
+    <meta name="description" content="Mostebin ile kodunuzu anında paylaşın. Hızlı, güvenli ve şık.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/dracula.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    
+
     <style>
-        :root { 
-            --bg: #0b0e14; 
-            --panel: #151921; 
-            --accent: #ff79c6; 
-            --text: #f8f8f2; 
-            --line-num: #6272a4; 
+        :root {
+            --bg-primary: #080b12;
+            --bg-secondary: #0d1117;
+            --bg-card: rgba(15, 20, 32, 0.85);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(139, 92, 246, 0.4);
+            --accent: #8b5cf6;
+            --accent-2: #06b6d4;
+            --accent-3: #f59e0b;
+            --text-primary: #e2e8f0;
+            --text-secondary: #64748b;
+            --text-muted: #334155;
+            --line-num: #374151;
+            --success: #10b981;
+            --danger: #ef4444;
+            --glow: rgba(139, 92, 246, 0.15);
         }
-        * { box-sizing: border-box; }
-        body { 
-            margin: 0; 
-            background: var(--bg); 
-            color: var(--text); 
-            font-family: 'Fira Code', 'Consolas', monospace; 
-            display: flex; 
-            height: 100vh; 
-            overflow: hidden; 
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        .sidebar { 
-            width: 65px; 
-            background: var(--panel); 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 20px 0; 
-            border-right: 1px solid #282a36; 
-            z-index: 100; 
-        }
-        .top-actions {
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 25px;
-            align-items: center;
         }
-        .btn { 
-            color: var(--line-num); 
-            font-size: 22px; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            position: relative; 
-        }
-        .btn:hover { color: var(--accent); transform: scale(1.1); }
-        .btn::after { 
-            content: attr(data-label); 
-            position: absolute; 
-            left: 55px; 
-            top: 50%; 
-            transform: translateY(-50%); 
-            background: #44475a; 
-            font-size: 12px; 
-            padding: 5px 10px; 
-            border-radius: 4px; 
-            visibility: hidden; 
-            white-space: nowrap; 
-            color: white; 
-        }
-        .btn:hover::after { visibility: visible; }
-        .brand-name {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            color: var(--accent);
-            font-weight: bold;
-            font-size: 13px;
-            letter-spacing: 3px;
-            opacity: 0.5;
-            text-transform: uppercase;
-            cursor: default;
-            transition: 0.3s;
-            margin-bottom: 10px;
-        }
-        .brand-name:hover { opacity: 1; text-shadow: 0 0 10px var(--accent); }
-        .editor-container { flex-grow: 1; display: flex; position: relative; overflow: hidden; }
-        .line-numbers { 
-            width: 50px; 
-            padding: 25px 0; 
-            background: var(--bg); 
-            color: var(--line-num); 
-            text-align: right; 
-            padding-right: 10px; 
-            font-size: 14px; 
-            user-select: none; 
-            border-right: 1px solid #282a36; 
-            line-height: 1.6; 
+
+        /* ── Animated Background ── */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
             overflow: hidden;
         }
-        #codeEditor, #viewer { 
-            flex-grow: 1; 
-            padding: 25px; 
-            border: none; 
-            outline: none; 
-            font-size: 14px; 
-            font-family: inherit; 
-            line-height: 1.6; 
-            background: transparent; 
-            color: var(--text); 
-            resize: none; 
-            overflow-y: auto; 
-            overflow-x: auto; 
-            white-space: pre; 
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.12;
+            animation: orbFloat 20s ease-in-out infinite;
         }
-        #viewer { display: none; margin: 0; }
-        code { font-family: inherit !important; }
-        .badge { 
-            position: absolute; 
-            top: 10px; 
-            right: 25px; 
-            background: #44475a; 
-            color: var(--accent); 
-            font-size: 10px; 
-            padding: 2px 8px; 
-            border-radius: 4px; 
-            letter-spacing: 1px; 
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--accent);
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-2);
+            bottom: -150px;
+            right: -100px;
+            animation-delay: -7s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: var(--accent-3);
+            top: 50%;
+            left: 50%;
+            animation-delay: -14s;
+        }
+
+        @keyframes orbFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -30px) scale(1.05);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.95);
+            }
+        }
+
+        /* ── Header ── */
+        .header {
+            position: relative;
             z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 56px;
+            background: rgba(8, 11, 18, 0.9);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            flex-shrink: 0;
         }
-        #toast { 
-            position: fixed; 
-            bottom: 20px; 
-            right: 20px; 
-            background: var(--accent); 
-            color: var(--bg); 
-            padding: 12px 25px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            transform: translateY(150%); 
-            transition: 0.4s; 
-            z-index: 1000; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            cursor: default;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 35px rgba(139, 92, 246, 0.7), 0 0 60px rgba(6, 182, 212, 0.2);
+            }
+        }
+
+        .logo-text {
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #e2e8f0, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.3px;
+        }
+
+        .header-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+        }
+
+        .lang-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lang-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: dotBlink 2s ease-in-out infinite;
+        }
+
+        @keyframes dotBlink {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+
+        .lang-badge.active .dot {
+            background: var(--success);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-glass);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .action-btn:hover::before {
+            opacity: 0.1;
+        }
+
+        .action-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15);
+        }
+
+        .action-btn:active {
+            transform: none;
+        }
+
+        .action-btn i {
+            font-size: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .action-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            border-color: transparent;
+            color: white;
+        }
+
+        .action-btn.primary::before {
+            display: none;
+        }
+
+        .action-btn.primary:hover {
+            box-shadow: 0 4px 25px rgba(139, 92, 246, 0.5);
+        }
+
+        .action-btn.hidden {
+            display: none;
+        }
+
+        /* ── Main Layout ── */
+        .main {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Editor Panel ── */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ── Editor Toolbar ── */
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 20px;
+            background: rgba(13, 17, 23, 0.8);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .traffic-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .tl-red {
+            background: #ff5f57;
+        }
+
+        .tl-yellow {
+            background: #febc2e;
+        }
+
+        .tl-green {
+            background: #28c840;
+        }
+
+        .traffic-light:hover {
+            filter: brightness(1.2);
+            transform: scale(1.1);
+        }
+
+        .file-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 14px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            margin-left: 12px;
+        }
+
+        .file-tab i {
+            color: var(--accent);
+            font-size: 11px;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .cursor-info {
+            transition: all 0.2s;
+        }
+
+        /* ── Code Editor Area ── */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .line-numbers {
+            width: 56px;
+            padding: 20px 0;
+            background: transparent;
+            color: var(--line-num);
+            text-align: right;
+            padding-right: 16px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            user-select: none;
+            border-right: 1px solid var(--border);
+            line-height: 1.7;
+            overflow: hidden;
+            flex-shrink: 0;
+            counter-reset: line;
+        }
+
+        #codeEditor {
+            flex: 1;
+            padding: 20px 24px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.7;
+            background: transparent;
+            color: var(--text-primary);
+            resize: none;
+            overflow-y: auto;
+            overflow-x: auto;
+            white-space: pre;
+            caret-color: var(--accent);
+            tab-size: 4;
+        }
+
+        #codeEditor::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        #codeEditor::selection {
+            background: rgba(139, 92, 246, 0.25);
+        }
+
+        #viewer {
+            display: none;
+            flex: 1;
+            padding: 20px 24px;
+            margin: 0;
+            overflow-y: auto;
+            overflow-x: auto;
+            background: transparent;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.7;
+        }
+
+        #viewer code {
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 14px;
+            background: transparent !important;
+        }
+
+        /* ── Status Bar ── */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 28px;
+            background: rgba(8, 11, 18, 0.95);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .status-left,
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+
+        .status-item:hover {
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: statusPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* ── Toast Notification ── */
+        #toast {
+            position: fixed;
+            bottom: 40px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            transform: translateY(calc(100% + 50px));
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            z-index: 9999;
+            opacity: 0;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            min-width: 200px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #toast.success {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+        }
+
+        #toast.error {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        #toast.info {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: rgba(139, 92, 246, 0.3);
+            color: #c4b5fd;
+        }
+
+        #toast.loading {
+            background: rgba(6, 182, 212, 0.15);
+            border-color: rgba(6, 182, 212, 0.3);
+            color: #67e8f9;
+        }
+
+        .toast-icon {
+            font-size: 14px;
+        }
+
+        /* ── Loading Overlay ── */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 20px;
+            animation: loadingPulse 1.5s ease-in-out infinite;
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+        }
+
+        @keyframes loadingPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 60px rgba(139, 92, 246, 0.8);
+            }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 2px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 16px;
+            overflow: hidden;
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            border-radius: 2px;
+            animation: loadingBar 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loadingBar {
+            0% {
+                width: 0%;
+                margin-left: 0%;
+            }
+
+            50% {
+                width: 60%;
+                margin-left: 20%;
+            }
+
+            100% {
+                width: 0%;
+                margin-left: 100%;
+            }
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.4);
+        }
+
+        /* ── Highlight.js override ── */
+        .hljs {
+            background: transparent !important;
+            padding: 0 !important;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.4s ease forwards;
+        }
+
+        /* ── Keyboard Shortcut Hint ── */
+        .kbd {
+            display: inline-flex;
+            align-items: center;
+            padding: 1px 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+        }
+
+        /* ── Share URL Bar ── */
+        .share-bar {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 20px;
+            background: rgba(16, 185, 129, 0.05);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+            font-size: 12px;
+            color: var(--text-secondary);
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .share-bar.visible {
+            display: flex;
+        }
+
+        .share-url {
+            flex: 1;
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            outline: none;
+            cursor: text;
+        }
+
+        .share-copy-btn {
+            padding: 5px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 6px;
+            color: #6ee7b7;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .share-copy-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        /* ── Tooltip ── */
+        [data-tip] {
+            position: relative;
+        }
+
+        [data-tip]::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 20, 32, 0.95);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(10px);
+        }
+
+        [data-tip]:hover::after {
+            opacity: 1;
+        }
+
+        /* ── Ripple Effect ── */
+        .action-btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0);
+            animation: rippleAnim 0.5s linear;
+            pointer-events: none;
+        }
+
+        @keyframes rippleAnim {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <div class="sidebar">
-        <div class="top-actions">
-            <div class="btn" data-label="Yeni (Ctrl+N)" onclick="newPaste()"><i class="fas fa-plus"></i></div>
-            <div class="btn" id="saveBtn" data-label="Kaydet (Ctrl+S)" onclick="savePaste()"><i class="fas fa-save"></i></div>
-            <div class="btn" id="editBtn" data-label="Düzenle" onclick="editPaste()" style="display:none;"><i class="fas fa-pen"></i></div>
-            <div class="btn" id="copyBtn" data-label="Kopyala" onclick="copyCode()" style="display:none;"><i class="fas fa-copy"></i></div>
-            <div class="btn" id="downloadBtn" data-label="İndir" onclick="downloadCode()" style="display:none;"><i class="fas fa-download"></i></div>
+    <!-- Loading Screen -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-logo"><i class="fas fa-code"></i></div>
+        <div class="loading-text">Mostebin yükleniyor...</div>
+        <div class="loading-bar">
+            <div class="loading-bar-fill"></div>
         </div>
-        <div class="brand-name">MotionStudio</div>
     </div>
 
-    <div class="editor-container">
-        <div class="badge" id="langBadge">DRAFT</div>
-        <div class="line-numbers" id="lineNos">1</div>
-        <textarea id="codeEditor" spellcheck="false" placeholder="Kodunuzu buraya yapıştırın..." oninput="updateLineNumbers()" onscroll="syncScroll()"></textarea>
-        <pre id="viewer" onscroll="syncScroll()"><code id="codeBlock"></code></pre>
+    <!-- Background Orbs -->
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
     </div>
 
-    <div id="toast">Bildirim</div>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-code"></i></div>
+                <span class="logo-text">Mostebin</span>
+            </div>
+            <div class="header-divider"></div>
+            <div class="lang-badge" id="langBadge">
+                <div class="dot"></div>
+                <span id="langText">DRAFT</span>
+            </div>
+        </div>
 
-<script>
-    const editor = document.getElementById('codeEditor');
-    const lineNos = document.getElementById('lineNos');
-    const viewer = document.getElementById('viewer');
-    const codeBlock = document.getElementById('codeBlock');
-    const langBadge = document.getElementById('langBadge');
-    const toast = document.getElementById('toast');
+        <div class="header-actions">
+            <button class="action-btn" id="newBtn" onclick="newPaste()" data-tip="Ctrl+N">
+                <i class="fas fa-plus"></i>
+                <span>Yeni</span>
+            </button>
+            <button class="action-btn primary" id="saveBtn" onclick="savePaste()" data-tip="Ctrl+S">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Kaydet & Paylaş</span>
+            </button>
+            <button class="action-btn hidden" id="editBtn" onclick="editPaste()" data-tip="Düzenle">
+                <i class="fas fa-pen"></i>
+                <span>Düzenle</span>
+            </button>
+            <button class="action-btn hidden" id="copyBtn" onclick="copyCode()" data-tip="Kopyala">
+                <i class="fas fa-copy"></i>
+                <span>Kopyala</span>
+            </button>
+            <button class="action-btn hidden" id="downloadBtn" onclick="downloadCode()" data-tip="İndir">
+                <i class="fas fa-download"></i>
+                <span>İndir</span>
+            </button>
+        </div>
+    </header>
 
-    // API URL - Vercel üzerinde /api dizinine gider
-    const API_URL = "/api";
+    <!-- Main -->
+    <div class="main">
+        <div class="editor-panel">
 
-    window.onload = checkUrl;
-    window.onhashchange = checkUrl;
+            <!-- Share Bar -->
+            <div class="share-bar" id="shareBar">
+                <i class="fas fa-link" style="color: var(--success); font-size: 12px;"></i>
+                <span style="color: var(--text-muted);">Paylaşım linki:</span>
+                <input class="share-url" id="shareUrl" readonly>
+                <button class="share-copy-btn" onclick="copyShareUrl()">
+                    <i class="fas fa-copy"></i> Kopyala
+                </button>
+            </div>
 
-    async function checkUrl() {
-        const id = window.location.hash.substring(1);
-        if (id && id.length > 2) {
-            showToast("Kod yükleniyor...");
-            try {
-                const res = await fetch(`${API_URL}/get/${id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    showHighlighted(data.content);
-                } else {
-                    showToast("Hata: Kod bulunamadı!");
+            <!-- Editor Toolbar -->
+            <div class="editor-toolbar">
+                <div class="toolbar-left">
+                    <div class="traffic-light tl-red"></div>
+                    <div class="traffic-light tl-yellow"></div>
+                    <div class="traffic-light tl-green"></div>
+                    <div class="file-tab">
+                        <i class="fas fa-file-code"></i>
+                        <span id="fileTabName">untitled</span>
+                    </div>
+                </div>
+                <div class="toolbar-right">
+                    <span class="cursor-info" id="cursorInfo">Ln 1, Col 1</span>
+                    <span>UTF-8</span>
+                    <span>LF</span>
+                </div>
+            </div>
+
+            <!-- Editor Area -->
+            <div class="editor-area">
+                <div class="line-numbers" id="lineNos">1</div>
+                <textarea id="codeEditor" spellcheck="false"
+                    placeholder="// Kodunuzu buraya yapıştırın veya yazmaya başlayın...&#10;// Ctrl+S ile kaydedin ve paylaşın"
+                    oninput="onEditorInput()" onscroll="syncScroll()" onclick="updateCursorInfo()"
+                    onkeyup="updateCursorInfo()"></textarea>
+                <pre id="viewer" onscroll="syncScroll()"><code id="codeBlock"></code></pre>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-left">
+                    <div class="status-item">
+                        <div class="status-dot"></div>
+                        <span id="statusText">Hazır</span>
+                        <span id="modeBadge"
+                            style="margin-left: 8px; padding: 2px 6px; border-radius: 4px; font-size: 9px; display: none;"></span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-code" style="font-size: 10px;"></i>
+                        <span id="charCount">0 karakter</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-list-ol" style="font-size: 10px;"></i>
+                        <span id="lineCount">1 satır</span>
+                    </div>
+                </div>
+                <div class="status-right">
+                    <span class="status-item"><kbd class="kbd">Ctrl+S</kbd> Kaydet</span>
+                    <span class="status-item"><kbd class="kbd">Ctrl+N</kbd> Yeni</span>
+                    <span class="status-item"><kbd class="kbd">Tab</kbd> 4 boşluk</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast">
+        <span class="toast-icon" id="toastIcon"></span>
+        <span id="toastMsg">Bildirim</span>
+    </div>
+
+    <script>
+        const editor = document.getElementById('codeEditor');
+        const lineNos = document.getElementById('lineNos');
+        const viewer = document.getElementById('viewer');
+        const codeBlock = document.getElementById('codeBlock');
+        const langBadge = document.getElementById('langBadge');
+        const langText = document.getElementById('langText');
+        const toast = document.getElementById('toast');
+        const shareBar = document.getElementById('shareBar');
+        const shareUrl = document.getElementById('shareUrl');
+        const fileTabName = document.getElementById('fileTabName');
+        const charCount = document.getElementById('charCount');
+        const lineCount = document.getElementById('lineCount');
+        const cursorInfo = document.getElementById('cursorInfo');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        const API_URL = "/api";
+        const LS_KEY = 'mostebin_pastes';
+        let isLocalMode = false;
+
+        // ── localStorage helpers ──
+        function lsSave(code) {
+            const id = Math.random().toString(36).substring(2, 10);
+            const pastes = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+            pastes[id] = code;
+            localStorage.setItem(LS_KEY, JSON.stringify(pastes));
+            return id;
+        }
+
+        function lsGet(id) {
+            const pastes = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+            return pastes[id] || null;
+        }
+
+        // ── Init ──
+        window.onload = () => {
+            setTimeout(() => {
+                loadingOverlay.classList.add('hidden');
+                checkUrl();
+            }, 800);
+        };
+
+        window.onhashchange = checkUrl;
+
+        async function checkUrl() {
+            const id = window.location.hash.substring(1);
+            if (id && id.length > 2) {
+                showToast('Kod yükleniyor...', 'loading');
+                // Önce localStorage'a bak (local mod)
+                const local = lsGet(id);
+                if (local) {
+                    isLocalMode = true;
+                    showHighlighted(local, id);
+                    showToast('Yerel depodan yüklendi', 'info');
+                    return;
+                }
+                // API'yi dene
+                try {
+                    const res = await fetch(`${API_URL}/get/${id}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        showHighlighted(data.content, id);
+                    } else {
+                        showToast('Kod bulunamadı!', 'error');
+                        newPaste();
+                    }
+                } catch (err) {
+                    showToast('Bağlantı hatası!', 'error');
                     newPaste();
                 }
-            } catch (err) {
-                showToast("Bağlantı hatası!");
+            } else {
+                newPaste();
             }
-        } else {
-            newPaste();
         }
-    }
 
-    async function savePaste() {
-        const code = editor.value;
-        if (!code.trim()) return showToast("Önce bir şeyler yazmalısın!");
-        
-        showToast("Kaydediliyor...");
-        try {
-            const res = await fetch(`${API_URL}/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: code })
-            });
-            const data = await res.json();
-            if (data.id) {
+        async function savePaste() {
+            const code = editor.value;
+            if (!code.trim()) return showToast('Önce bir şeyler yazmalısın!', 'error');
+
+            const saveBtn = document.getElementById('saveBtn');
+            if (saveBtn.classList.contains('loading')) return;
+
+            saveBtn.classList.add('loading');
+            const origHTML = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Kaydediliyor...</span>';
+            showToast('Kaydediliyor...', 'loading');
+
+            // API'yi dene, başarısız olursa localStorage'a kaydet
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3000);
+
+                const res = await fetch(`${API_URL}/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: code }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeout);
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (!data.id) throw new Error('ID yok');
+
+                isLocalMode = false;
                 window.location.hash = data.id;
-                showHighlighted(code);
-                showToast("Başarıyla Kaydedildi!");
+                showHighlighted(code, data.id);
+                showToast('☁️ Sunucuya kaydedildi!', 'success');
+
+            } catch (err) {
+                // API yok → localStorage fallback
+                console.warn('API erişilemedi, localStorage kullanılıyor:', err.message);
+                const id = lsSave(code);
+                isLocalMode = true;
+                window.location.hash = id;
+                showHighlighted(code, id);
+                showToast('💾 Yerel olarak kaydedildi!', 'success');
+            } finally {
+                saveBtn.classList.remove('loading');
+                saveBtn.innerHTML = origHTML;
             }
-        } catch (err) {
-            showToast("Kaydetme hatası!");
         }
-    }
 
-    function showHighlighted(code) {
-        editor.style.display = 'none';
-        viewer.style.display = 'block';
-        editor.value = code;
-        updateLineNumbers();
-        document.getElementById('saveBtn').style.display = 'none';
-        ['editBtn', 'copyBtn', 'downloadBtn'].forEach(id => document.getElementById(id).style.display = 'block');
-        codeBlock.textContent = code;
-        const result = hljs.highlightAuto(code);
-        codeBlock.innerHTML = result.value;
-        langBadge.innerText = (result.language || "text").toUpperCase();
-    }
-
-    function editPaste() {
-        editor.style.display = 'block';
-        viewer.style.display = 'none';
-        document.getElementById('saveBtn').style.display = 'block';
-        ['editBtn', 'copyBtn', 'downloadBtn'].forEach(id => document.getElementById(id).style.display = 'none');
-        langBadge.innerText = "EDITING";
-        editor.focus();
-    }
-
-    function newPaste() {
-        if(window.location.hash) {
-            window.location.hash = "";
-            return;
-        }
-        editor.value = "";
-        editPaste();
-        updateLineNumbers();
-    }
-
-    function updateLineNumbers() {
-        const lines = editor.value.split('\n').length;
-        lineNos.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
-    }
-
-    function syncScroll() {
-        const target = editor.style.display === 'none' ? viewer : editor;
-        lineNos.scrollTop = target.scrollTop;
-    }
-
-    function copyCode() {
-        navigator.clipboard.writeText(editor.value);
-        showToast("Panoya Kopyalandı!");
-    }
-
-    function downloadCode() {
-        const blob = new Blob([editor.value], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `code-${window.location.hash.substring(1) || 'new'}.txt`;
-        a.click();
-    }
-
-    function showToast(msg) {
-        toast.innerText = msg;
-        toast.style.transform = "translateY(0)";
-        setTimeout(() => { toast.style.transform = "translateY(150%)"; }, 3000);
-    }
-
-    editor.addEventListener('keydown', e => {
-        if(e.key === 'Tab') {
-            e.preventDefault();
-            const start = editor.selectionStart;
-            editor.value = editor.value.substring(0, start) + "    " + editor.value.substring(editor.selectionEnd);
-            editor.selectionStart = editor.selectionEnd = start + 4;
+        function showHighlighted(code, id) {
+            editor.style.display = 'none';
+            viewer.style.display = 'block';
+            editor.value = code;
             updateLineNumbers();
+            updateStats();
+
+            // Mode Badge
+            const mb = document.getElementById('modeBadge');
+            if (isLocalMode) {
+                mb.textContent = 'LOCAL';
+                mb.style.display = 'inline-block';
+                mb.style.background = 'rgba(245, 158, 11, 0.1)';
+                mb.style.color = '#f59e0b';
+                mb.style.border = '1px solid rgba(245, 158, 11, 0.2)';
+            } else {
+                mb.textContent = 'CLOUD';
+                mb.style.display = 'inline-block';
+                mb.style.background = 'rgba(16, 185, 129, 0.1)';
+                mb.style.color = '#10b981';
+                mb.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+            }
+
+            document.getElementById('saveBtn').classList.add('hidden');
+            document.getElementById('newBtn').classList.remove('hidden');
+            ['editBtn', 'copyBtn', 'downloadBtn'].forEach(btnId => {
+                document.getElementById(btnId).classList.remove('hidden');
+            });
+
+            codeBlock.textContent = code;
+            const result = hljs.highlightAuto(code);
+            codeBlock.innerHTML = result.value;
+
+            const lang = (result.language || 'text').toUpperCase();
+            langText.textContent = lang;
+            langBadge.classList.add('active');
+
+            // File tab name
+            const ext = getExtension(result.language);
+            fileTabName.textContent = `paste-${id}${ext}`;
+
+            // Share bar
+            const url = window.location.href;
+            shareUrl.value = url;
+            shareBar.classList.add('visible');
+
+            // Viewer fade in
+            viewer.classList.add('fade-in');
         }
-        if (e.ctrlKey && e.key === 's') { e.preventDefault(); savePaste(); }
-        if (e.ctrlKey && e.key === 'n') { e.preventDefault(); newPaste(); }
-    });
-</script>
+
+        function getExtension(lang) {
+            const map = {
+                javascript: '.js', typescript: '.ts', python: '.py', java: '.java',
+                cpp: '.cpp', c: '.c', csharp: '.cs', php: '.php', ruby: '.rb',
+                go: '.go', rust: '.rs', swift: '.swift', kotlin: '.kt',
+                html: '.html', css: '.css', json: '.json', xml: '.xml',
+                sql: '.sql', bash: '.sh', shell: '.sh', markdown: '.md',
+                yaml: '.yml', dockerfile: 'Dockerfile'
+            };
+            return map[lang] || '.txt';
+        }
+
+        function editPaste() {
+            editor.style.display = 'block';
+            viewer.style.display = 'none';
+            shareBar.classList.remove('visible');
+
+            document.getElementById('saveBtn').classList.remove('hidden');
+            ['editBtn', 'copyBtn', 'downloadBtn'].forEach(btnId => {
+                document.getElementById(btnId).classList.add('hidden');
+            });
+
+            langText.textContent = 'EDITING';
+            langBadge.classList.remove('active');
+            fileTabName.textContent = 'untitled';
+            editor.focus();
+        }
+
+        function newPaste() {
+            if (window.location.hash) {
+                history.pushState('', document.title, window.location.pathname);
+            }
+            editor.value = '';
+            editor.style.display = 'block';
+            viewer.style.display = 'none';
+            shareBar.classList.remove('visible');
+
+            document.getElementById('saveBtn').classList.remove('hidden');
+            ['editBtn', 'copyBtn', 'downloadBtn'].forEach(btnId => {
+                document.getElementById(btnId).classList.add('hidden');
+            });
+
+            langText.textContent = 'DRAFT';
+            langBadge.classList.remove('active');
+            fileTabName.textContent = 'untitled';
+            updateLineNumbers();
+            updateStats();
+            editor.focus();
+        }
+
+        function onEditorInput() {
+            updateLineNumbers();
+            updateStats();
+        }
+
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineNos.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+        }
+
+        function updateStats() {
+            const code = editor.value;
+            const lines = code.split('\n').length;
+            const chars = code.length;
+            charCount.textContent = `${chars.toLocaleString('tr')} karakter`;
+            lineCount.textContent = `${lines.toLocaleString('tr')} satır`;
+        }
+
+        function updateCursorInfo() {
+            const pos = editor.selectionStart;
+            const text = editor.value.substring(0, pos);
+            const lines = text.split('\n');
+            const ln = lines.length;
+            const col = lines[lines.length - 1].length + 1;
+            cursorInfo.textContent = `Ln ${ln}, Col ${col}`;
+        }
+
+        function syncScroll() {
+            const target = editor.style.display === 'none' ? viewer : editor;
+            lineNos.scrollTop = target.scrollTop;
+        }
+
+        function copyCode() {
+            navigator.clipboard.writeText(editor.value).then(() => {
+                showToast('Panoya kopyalandı!', 'success');
+                const btn = document.getElementById('copyBtn');
+                const icon = btn.querySelector('i');
+                icon.className = 'fas fa-check';
+                setTimeout(() => { icon.className = 'fas fa-copy'; }, 2000);
+            });
+        }
+
+        function copyShareUrl() {
+            navigator.clipboard.writeText(shareUrl.value).then(() => {
+                showToast('Link kopyalandı!', 'success');
+            });
+        }
+
+        function downloadCode() {
+            const id = window.location.hash.substring(1) || 'new';
+            const lang = langText.textContent.toLowerCase();
+            const ext = getExtension(lang === 'draft' || lang === 'editing' ? 'text' : lang);
+            const blob = new Blob([editor.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mostebin-${id}${ext}`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('İndirme başladı!', 'success');
+        }
+
+        // ── Toast ──
+        let toastTimer;
+        function showToast(msg, type = 'info') {
+            clearTimeout(toastTimer);
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle',
+                loading: 'fas fa-spinner fa-spin'
+            };
+            document.getElementById('toastIcon').className = `toast-icon ${icons[type] || icons.info}`;
+            document.getElementById('toastMsg').textContent = msg;
+            toast.className = `${type} show`;
+            toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        // ── Ripple Effect ──
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+                ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        // ── Keyboard Shortcuts ──
+        editor.addEventListener('keydown', e => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
+                editor.selectionStart = editor.selectionEnd = start + 4;
+                onEditorInput();
+            }
+            if (e.ctrlKey && e.key === 's') { e.preventDefault(); savePaste(); }
+            if (e.ctrlKey && e.key === 'n') { e.preventDefault(); newPaste(); }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 's') { e.preventDefault(); savePaste(); }
+            if (e.ctrlKey && e.key === 'n') { e.preventDefault(); newPaste(); }
+        });
+
+        // ── Init stats ──
+        updateLineNumbers();
+        updateStats();
+    </script>
 </body>
+
 </html>
