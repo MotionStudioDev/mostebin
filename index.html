@@ -1293,10 +1293,22 @@
             .status-bar {
                 margin-bottom: calc(64px + env(safe-area-inset-bottom));
                 height: auto;
-                padding: 8px 20px;
+                padding: 10px 15px;
                 flex-direction: column;
                 gap: 8px;
-                align-items: flex-start;
+                align-items: center;
+                text-align: center;
+            }
+
+            .status-left {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 12px;
+                width: 100%;
+            }
+
+            .status-item {
+                font-size: 10px;
             }
 
             .status-right {
