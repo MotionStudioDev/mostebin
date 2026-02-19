@@ -1130,6 +1130,142 @@
             display: block;
         }
 
+        /* ── Drop Zone ── */
+        .drop-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 11, 18, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--accent);
+            margin: 20px;
+            border-radius: 20px;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .drop-overlay.active {
+            display: flex;
+            pointer-events: all;
+        }
+
+        .drop-icon {
+            font-size: 64px;
+            color: var(--accent);
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        .drop-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* ── Stats Panel ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .stats-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stats-val {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stats-lbl {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* ── Mobile Bottom Bar ── */
+        .mobile-bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(13, 17, 23, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: none;
+            align-items: center;
+            justify-content: space-around;
+            padding-bottom: env(safe-area-inset-bottom);
+            z-index: 1000;
+        }
+
+        .bottom-action {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+        }
+
+        .bottom-action i {
+            font-size: 18px;
+        }
+
+        .bottom-action:active {
+            color: var(--accent);
+            transform: scale(0.95);
+        }
+
+        .bottom-action.primary {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: white;
+            border-radius: 50%;
+            justify-content: center;
+            margin-top: -30px;
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.4);
+            border: 4px solid var(--bg-primary);
+        }
+
+        .bottom-action.primary i {
+            font-size: 20px;
+        }
+
         /* ── Mobile Queries ── */
         @media (max-width: 768px) {
             .header-actions .action-btn:not(.primary) {
@@ -1141,11 +1277,21 @@
             }
 
             .header-divider,
-            .lang-badge {
+            .lang-badge,
+            #statsBadge {
                 display: none;
             }
 
+            .mobile-bottom-bar {
+                display: flex;
+            }
+
+            .main {
+                padding-bottom: calc(64px + env(safe-area-inset-bottom));
+            }
+
             .status-bar {
+                margin-bottom: calc(64px + env(safe-area-inset-bottom));
                 height: auto;
                 padding: 8px 20px;
                 flex-direction: column;
@@ -1177,13 +1323,38 @@
                 font-size: 14px;
             }
 
+            .sidebar-title {
+                padding: 10px 15px;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.05);
+                flex: 1;
+                text-align: center;
+            }
+
+            .password-tray.open {
+                height: 100px;
+                flex-direction: column;
+                gap: 12px;
+                padding: 15px 20px;
+            }
+
+            .tray-input-wrapper {
+                max-width: 100%;
+            }
+
             .sidebar {
                 width: 100%;
                 left: -100%;
+                top: 0;
+                bottom: 0;
             }
 
             .sidebar.open {
                 left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -1197,7 +1368,12 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <span class="sidebar-title">GEÇMİŞ</span>
+            <div style="display: flex; gap: 15px;">
+                <span class="sidebar-title" id="tabHistory" onclick="switchSidebarTab('history')"
+                    style="cursor: pointer; color: var(--text-primary);">GEÇMİŞ</span>
+                <span class="sidebar-title" id="tabStats" onclick="switchSidebarTab('stats')"
+                    style="cursor: pointer;">STATS</span>
+            </div>
             <button class="action-btn" onclick="toggleSidebar()"
                 style="padding: 5px; min-width: 32px; border: none; background: transparent;">
                 <i class="fas fa-times"></i>
@@ -1205,10 +1381,33 @@
         </div>
         <div class="history-list" id="historyList">
             <!-- History items will be injected here -->
-            <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">
-                Henüz geçmiş bulunmuyor.
+        </div>
+        <div class="stats-panel" id="statsPanel" style="display: none;">
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <div class="stats-val" id="statChars">0</div>
+                    <div class="stats-lbl">KARAKTER</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-val" id="statKeys">0</div>
+                    <div class="stats-lbl">TUŞ VURUŞU</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-val" id="statWPM">0</div>
+                    <div class="stats-lbl">WPM</div>
+                </div>
+                <div class="stats-card" title="Toplam aktif yazma süresi">
+                    <div class="stats-val" id="statTime">0s</div>
+                    <div class="stats-lbl">SÜRE</div>
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- Drop Overlay -->
+    <div class="drop-overlay" id="dropOverlay">
+        <i class="fas fa-cloud-upload-alt drop-icon"></i>
+        <div class="drop-text">Dosyayı Bırak ve Yükle</div>
     </div>
 
     <!-- Loading Screen -->
@@ -1238,6 +1437,12 @@
             <div class="lang-badge" id="langBadge">
                 <div class="dot"></div>
                 <span id="langText">DRAFT</span>
+            </div>
+            <div class="lang-badge" id="statsBadge"
+                style="cursor: pointer; background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3);"
+                onclick="toggleSidebar() && switchSidebarTab('stats')">
+                <i class="fas fa-tachometer-alt" style="color: var(--accent);"></i>
+                <span id="cpmText" style="color: var(--text-primary); margin-left: 5px;">0 CPM</span>
             </div>
         </div>
 
@@ -1302,6 +1507,30 @@
                 style="right: 10px;"></i>
         </div>
         <i class="fas fa-times tray-close" onclick="togglePasswordTray()" title="Kapat"></i>
+    </div>
+
+    <!-- Mobile Bottom Bar -->
+    <div class="mobile-bottom-bar">
+        <button class="bottom-action" onclick="newPaste()">
+            <i class="fas fa-plus"></i>
+            <span>Yeni</span>
+        </button>
+        <button class="bottom-action" onclick="togglePasswordTray()">
+            <i class="fas fa-shield-alt"></i>
+            <span>Şifrele</span>
+        </button>
+        <button class="bottom-action primary" onclick="savePaste()">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </button>
+        <button class="bottom-action" id="bottomCopyBtn" onclick="copyCode()"
+            style="opacity: 0.5; pointer-events: none;">
+            <i class="fas fa-copy"></i>
+            <span>Kopyala</span>
+        </button>
+        <button class="bottom-action" onclick="toggleSidebar()">
+            <i class="fas fa-history"></i>
+            <span>Geçmiş</span>
+        </button>
     </div>
 
     <!-- Toast -->
@@ -1401,11 +1630,20 @@
         const modalInput = document.getElementById('modalInput');
         const modalConfirm = document.getElementById('modalConfirm');
         const modalCancel = document.getElementById('modalCancel');
+        const dropOverlay = document.getElementById('dropOverlay');
 
         const API_URL = "/api";
         const LS_KEY = 'mostebin_pastes';
         const HISTORY_KEY = 'mostebin_history';
         const ENCRYPTED_PREFIX = '[ENCRYPTED]';
+
+        // ── Stats State ──
+        let stats = {
+            keystrokes: 0,
+            startTime: null,
+            activeTime: 0,
+            lastType: Date.now()
+        };
         let isLocalMode = false;
 
         // ── localStorage helpers ──
@@ -1688,6 +1926,14 @@
         function showHighlighted(code, id) {
             editor.style.display = 'none';
             viewer.style.display = 'block';
+
+            // Hide encrypt button and close tray when viewing
+            document.getElementById('encryptToggleBtn').style.display = 'none';
+            document.getElementById('bottomCopyBtn').style.opacity = '1';
+            document.getElementById('bottomCopyBtn').style.pointerEvents = 'all';
+            const tray = document.getElementById('passwordTray');
+            if (tray.classList.contains('open')) togglePasswordTray();
+
             editor.value = code;
             updateLineNumbers();
             updateStats();
@@ -1764,13 +2010,13 @@
         }
 
         function newPaste() {
-            if (window.location.hash) {
-                history.pushState('', document.title, window.location.pathname);
-            }
+            window.location.hash = '';
             editor.value = '';
             editor.style.display = 'block';
             viewer.style.display = 'none';
-            shareBar.classList.remove('visible');
+            document.getElementById('encryptToggleBtn').style.display = 'flex';
+            document.getElementById('bottomCopyBtn').style.opacity = '0.5';
+            document.getElementById('bottomCopyBtn').style.pointerEvents = 'none';
 
             document.getElementById('saveBtn').classList.remove('hidden');
             ['editBtn', 'copyBtn', 'downloadBtn'].forEach(btnId => {
@@ -1780,15 +2026,101 @@
             langText.textContent = 'DRAFT';
             langBadge.classList.remove('active');
             fileTabName.textContent = 'untitled';
-            updateLineNumbers();
-            updateStats();
+            onEditorInput();
             editor.focus();
         }
 
         function onEditorInput() {
             updateLineNumbers();
             updateStats();
+
+            // Update dev-stats logic
+            stats.keystrokes++;
+            const now = Date.now();
+            if (now - stats.lastType < 5000) { // If typing within 5 seconds
+                if (!stats.startTime) stats.startTime = now;
+                stats.activeTime += (now - stats.lastType);
+            } else {
+                // Return from idle
+                stats.startTime = now;
+            }
+            stats.lastType = now;
+            updateDevStatsUI();
         }
+
+        function updateDevStatsUI() {
+            const chars = editor.value.length;
+            const minutes = (stats.activeTime / 1000) / 60 || 0.01;
+            const cpm = Math.round(chars / minutes) || 0;
+            const wpm = Math.round((chars / 5) / minutes) || 0;
+
+            document.getElementById('cpmText').textContent = `${cpm} CPM`;
+            document.getElementById('statChars').textContent = chars;
+            document.getElementById('statKeys').textContent = stats.keystrokes;
+            document.getElementById('statWPM').textContent = wpm;
+            document.getElementById('statTime').textContent = Math.round(stats.activeTime / 1000) + 's';
+        }
+
+        function switchSidebarTab(tab) {
+            const hList = document.getElementById('historyList');
+            const sPanel = document.getElementById('statsPanel');
+            const tHist = document.getElementById('tabHistory');
+            const tStats = document.getElementById('tabStats');
+
+            if (tab === 'history') {
+                hList.style.display = 'block';
+                sPanel.style.display = 'none';
+                tHist.style.color = 'var(--text-primary)';
+                tStats.style.color = 'var(--text-secondary)';
+                renderHistory();
+            } else {
+                hList.style.display = 'none';
+                sPanel.style.display = 'block';
+                tHist.style.color = 'var(--text-secondary)';
+                tStats.style.color = 'var(--text-primary)';
+                updateDevStatsUI();
+            }
+            return true;
+        }
+
+        // ── Drag and Drop ──
+        window.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropOverlay.classList.add('active');
+        });
+
+        window.addEventListener('dragleave', e => {
+            if (e.relatedTarget === null) dropOverlay.classList.remove('active');
+        });
+
+        window.addEventListener('drop', e => {
+            e.preventDefault();
+            dropOverlay.classList.remove('active');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    newPaste();
+                    editor.value = re.target.result;
+                    onEditorInput();
+                    showToast(`${file.name} yüklendi`, 'success');
+
+                    // Auto language from extension
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    const extMap = {
+                        'js': 'javascript', 'ts': 'typescript', 'py': 'python',
+                        'html': 'xml', 'css': 'css', 'json': 'json', 'md': 'markdown',
+                        'c': 'c', 'cpp': 'cpp', 'java': 'java', 'php': 'php', 'rb': 'ruby'
+                    };
+                    if (extMap[ext]) {
+                        const langTrigger = Array.from(document.querySelectorAll('.lang-item'))
+                            .find(el => el.textContent.toLowerCase().includes(extMap[ext]));
+                        if (langTrigger) langTrigger.click();
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
 
         function updateLineNumbers() {
             const lines = editor.value.split('\n').length;
