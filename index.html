@@ -1,298 +1,2297 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mostebin | Kod Paylaşım</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/dracula.min.css">
+    <title>Mostebin — Kod Paylaşım Platformu</title>
+    <meta name="description" content="Mostebin ile kodunuzu anında paylaşın. Hızlı, güvenli ve şık.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/dracula.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+
     <style>
-        :root { 
-            --bg: #0b0e14; 
-            --panel: #151921; 
-            --accent: #ff79c6; 
-            --text: #f8f8f2; 
-            --line-num: #6272a4; 
+        :root {
+            --bg-primary: #080b12;
+            --bg-secondary: #0d1117;
+            --bg-card: rgba(15, 20, 32, 0.85);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(139, 92, 246, 0.4);
+            --accent: #8b5cf6;
+            --accent-2: #06b6d4;
+            --accent-3: #f59e0b;
+            --text-primary: #e2e8f0;
+            --text-secondary: #64748b;
+            --text-muted: #334155;
+            --line-num: #374151;
+            --success: #10b981;
+            --danger: #ef4444;
+            --glow: rgba(139, 92, 246, 0.15);
+            --sidebar-width: 280px;
         }
-        * { box-sizing: border-box; }
-        body { 
-            margin: 0; 
-            background: var(--bg); 
-            color: var(--text); 
-            font-family: 'Fira Code', 'Consolas', monospace; 
-            display: flex; 
-            height: 100vh; 
-            overflow: hidden; 
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        .sidebar { 
-            width: 65px; 
-            background: var(--panel); 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 20px 0; 
-            border-right: 1px solid #282a36; 
-            z-index: 100; 
-        }
-        .top-actions {
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 25px;
-            align-items: center;
         }
-        .btn { 
-            color: var(--line-num); 
-            font-size: 22px; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            position: relative; 
-        }
-        .btn:hover { color: var(--accent); transform: scale(1.1); }
-        .btn::after { 
-            content: attr(data-label); 
-            position: absolute; 
-            left: 55px; 
-            top: 50%; 
-            transform: translateY(-50%); 
-            background: #44475a; 
-            font-size: 12px; 
-            padding: 5px 10px; 
-            border-radius: 4px; 
-            visibility: hidden; 
-            white-space: nowrap; 
-            color: white; 
-        }
-        .btn:hover::after { visibility: visible; }
-        .brand-name {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            color: var(--accent);
-            font-weight: bold;
-            font-size: 13px;
-            letter-spacing: 3px;
-            opacity: 0.5;
-            text-transform: uppercase;
-            cursor: default;
-            transition: 0.3s;
-            margin-bottom: 10px;
-        }
-        .brand-name:hover { opacity: 1; text-shadow: 0 0 10px var(--accent); }
-        .editor-container { flex-grow: 1; display: flex; position: relative; overflow: hidden; }
-        .line-numbers { 
-            width: 50px; 
-            padding: 25px 0; 
-            background: var(--bg); 
-            color: var(--line-num); 
-            text-align: right; 
-            padding-right: 10px; 
-            font-size: 14px; 
-            user-select: none; 
-            border-right: 1px solid #282a36; 
-            line-height: 1.6; 
+
+        /* ── Animated Background ── */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
             overflow: hidden;
         }
-        #codeEditor, #viewer { 
-            flex-grow: 1; 
-            padding: 25px; 
-            border: none; 
-            outline: none; 
-            font-size: 14px; 
-            font-family: inherit; 
-            line-height: 1.6; 
-            background: transparent; 
-            color: var(--text); 
-            resize: none; 
-            overflow-y: auto; 
-            overflow-x: auto; 
-            white-space: pre; 
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.12;
+            animation: orbFloat 20s ease-in-out infinite;
         }
-        #viewer { display: none; margin: 0; }
-        code { font-family: inherit !important; }
-        .badge { 
-            position: absolute; 
-            top: 10px; 
-            right: 25px; 
-            background: #44475a; 
-            color: var(--accent); 
-            font-size: 10px; 
-            padding: 2px 8px; 
-            border-radius: 4px; 
-            letter-spacing: 1px; 
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--accent);
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-2);
+            bottom: -150px;
+            right: -100px;
+            animation-delay: -7s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: var(--accent-3);
+            top: 50%;
+            left: 50%;
+            animation-delay: -14s;
+        }
+
+        @keyframes orbFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -30px) scale(1.05);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.95);
+            }
+        }
+
+        /* ── Header ── */
+        .header {
+            position: relative;
             z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 56px;
+            background: rgba(8, 11, 18, 0.9);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            flex-shrink: 0;
         }
-        #toast { 
-            position: fixed; 
-            bottom: 20px; 
-            right: 20px; 
-            background: var(--accent); 
-            color: var(--bg); 
-            padding: 12px 25px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            transform: translateY(150%); 
-            transition: 0.4s; 
-            z-index: 1000; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            cursor: default;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 35px rgba(139, 92, 246, 0.7), 0 0 60px rgba(6, 182, 212, 0.2);
+            }
+        }
+
+        .logo-text {
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #e2e8f0, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.3px;
+        }
+
+        .header-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+        }
+
+        .lang-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lang-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: dotBlink 2s ease-in-out infinite;
+        }
+
+        @keyframes dotBlink {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+
+        .lang-badge.active .dot {
+            background: var(--success);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .mobile-menu-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .mobile-menu-btn.active {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-glass);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .action-btn:hover::before {
+            opacity: 0.1;
+        }
+
+        .action-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15);
+        }
+
+        .action-btn:active {
+            transform: none;
+        }
+
+        .action-btn i {
+            font-size: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .action-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            border-color: transparent;
+            color: white;
+        }
+
+        .action-btn.primary::before {
+            display: none;
+        }
+
+        .action-btn.primary:hover {
+            box-shadow: 0 4px 25px rgba(139, 92, 246, 0.5);
+        }
+
+        .action-btn.hidden {
+            display: none;
+        }
+
+        /* ── Main Layout ── */
+        .main {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Editor Panel ── */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ── Editor Toolbar ── */
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 20px;
+            background: rgba(13, 17, 23, 0.8);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .traffic-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .tl-red {
+            background: #ff5f57;
+        }
+
+        .tl-yellow {
+            background: #febc2e;
+        }
+
+        .tl-green {
+            background: #28c840;
+        }
+
+        .traffic-light:hover {
+            filter: brightness(1.2);
+        }
+
+        .file-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 14px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            margin-left: 12px;
+        }
+
+        .file-tab i {
+            color: var(--accent);
+            font-size: 11px;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .cursor-info {
+            transition: all 0.2s;
+        }
+
+        /* ── Code Editor Area ── */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .line-numbers {
+            width: 56px;
+            padding: 20px 0;
+            background: transparent;
+            color: var(--line-num);
+            text-align: right;
+            padding-right: 16px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            user-select: none;
+            border-right: 1px solid var(--border);
+            line-height: 1.7;
+            overflow: hidden;
+            flex-shrink: 0;
+            counter-reset: line;
+        }
+
+        #codeEditor {
+            flex: 1;
+            padding: 20px 24px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.7;
+            background: transparent;
+            color: var(--text-primary);
+            resize: none;
+            overflow-y: auto;
+            overflow-x: auto;
+            white-space: pre;
+            caret-color: var(--accent);
+            tab-size: 4;
+        }
+
+        #codeEditor::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        #codeEditor::selection {
+            background: rgba(139, 92, 246, 0.25);
+        }
+
+        #viewer {
+            display: none;
+            flex: 1;
+            padding: 20px 24px;
+            margin: 0;
+            overflow-y: auto;
+            overflow-x: auto;
+            background: transparent;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.7;
+        }
+
+        #viewer code {
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 14px;
+            background: transparent !important;
+        }
+
+        /* ── Status Bar ── */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 28px;
+            background: rgba(8, 11, 18, 0.95);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .status-left,
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+
+        .status-item:hover {
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: statusPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* ── Toast Notification ── */
+        #toast {
+            position: fixed;
+            bottom: 40px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            transform: translateY(calc(100% + 50px));
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            z-index: 9999;
+            opacity: 0;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            min-width: 200px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #toast.success {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+        }
+
+        #toast.error {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        #toast.info {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: rgba(139, 92, 246, 0.3);
+            color: #c4b5fd;
+        }
+
+        #toast.loading {
+            background: rgba(6, 182, 212, 0.15);
+            border-color: rgba(6, 182, 212, 0.3);
+            color: #67e8f9;
+        }
+
+        .toast-icon {
+            font-size: 14px;
+        }
+
+        /* ── Loading Overlay ── */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 20px;
+            animation: loadingPulse 1.5s ease-in-out infinite;
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+        }
+
+        @keyframes loadingPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 60px rgba(139, 92, 246, 0.8);
+            }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 2px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 16px;
+            overflow: hidden;
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            border-radius: 2px;
+            animation: loadingBar 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loadingBar {
+            0% {
+                width: 0%;
+                margin-left: 0%;
+            }
+
+            50% {
+                width: 60%;
+                margin-left: 20%;
+            }
+
+            100% {
+                width: 0%;
+                margin-left: 100%;
+            }
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.4);
+        }
+
+        /* ── Highlight.js override ── */
+        .hljs {
+            background: transparent !important;
+            padding: 0 !important;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.4s ease forwards;
+        }
+
+        /* ── Keyboard Shortcut Hint ── */
+        .kbd {
+            display: inline-flex;
+            align-items: center;
+            padding: 1px 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+        }
+
+        /* ── Share URL Bar ── */
+        .share-bar {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 20px;
+            background: rgba(16, 185, 129, 0.05);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+            font-size: 12px;
+            color: var(--text-secondary);
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .share-bar.visible {
+            display: flex;
+        }
+
+        .share-url {
+            flex: 1;
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            outline: none;
+            cursor: text;
+        }
+
+        .share-copy-btn {
+            padding: 5px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 6px;
+            color: #6ee7b7;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .share-copy-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        /* ── Tooltip ── */
+        [data-tip] {
+            position: relative;
+        }
+
+        [data-tip]::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 20, 32, 0.95);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(10px);
+        }
+
+        [data-tip]:hover::after {
+            opacity: 1;
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .modal-overlay.visible .modal-card {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-icon {
+            font-size: 48px;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .modal-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .modal-input-group {
+            margin-bottom: 20px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+            transition: border-color 0.2s;
+        }
+
+        .modal-input:focus {
+            border-color: var(--accent);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .modal-btn.cancel {
+            background: var(--bg-glass);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .modal-btn.cancel:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .modal-btn.confirm {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .modal-btn.confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        /* ── Password Tray ── */
+        .password-tray {
+            position: absolute;
+            top: 56px;
+            left: 0;
+            right: 0;
+            background: rgba(13, 17, 23, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 15;
+            padding: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .password-tray.open {
+            height: 60px;
+            padding: 0 24px;
+        }
+
+        .tray-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .tray-input-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .tray-input {
+            width: 100%;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            padding: 0 12px;
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tray-input:focus {
+            border-color: var(--accent);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .tray-close {
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+            font-size: 14px;
+        }
+
+        .tray-close:hover {
+            color: var(--danger);
+        }
+
+        .action-btn.active {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+            font-size: 14px;
+            z-index: 2;
+        }
+
+        .password-toggle:hover {
+            color: var(--accent);
+        }
+
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position: fixed;
+            top: 56px;
+            left: calc(-1 * var(--sidebar-width));
+            width: var(--sidebar-width);
+            bottom: 28px;
+            background: rgba(8, 11, 18, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border);
+            z-index: 20;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .history-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .history-item:hover {
+            background: var(--bg-glass);
+            border-color: var(--border);
+        }
+
+        .history-item-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .history-item-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-item-date {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .history-item-excerpt {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 15;
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .sidebar-overlay.visible {
+            display: block;
+        }
+
+        /* ── Drop Zone ── */
+        .drop-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 11, 18, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--accent);
+            margin: 20px;
+            border-radius: 20px;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .drop-overlay.active {
+            display: flex;
+            pointer-events: all;
+        }
+
+        .drop-icon {
+            font-size: 64px;
+            color: var(--accent);
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        .drop-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* ── Stats Panel ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .stats-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stats-val {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stats-lbl {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* ── Mobile Bottom Bar ── */
+        .mobile-bottom-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 68px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            display: none;
+            align-items: center;
+            justify-content: space-around;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            padding: 0 10px;
+        }
+
+        .bottom-action {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
+            border: none;
+            flex: 1;
+        }
+
+        .bottom-action i {
+            font-size: 20px;
+            transition: transform 0.3s;
+        }
+
+        .bottom-action:active {
+            color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .bottom-action.primary {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #8B5CF6 0%, #D946EF 100%);
+            color: white;
+            border-radius: 20px;
+            justify-content: center;
+            margin-top: -40px;
+            box-shadow: 0 12px 24px rgba(139, 92, 246, 0.5), 0 0 0 4px var(--bg-primary);
+            flex: none;
+            transform: rotate(45deg);
+        }
+
+        .bottom-action.primary i {
+            font-size: 24px;
+            transform: rotate(-45deg);
+        }
+
+        .bottom-action.primary:active {
+            transform: rotate(45deg) scale(0.9);
+        }
+
+        /* ── Mobile Queries ── */
+        @media (max-width: 768px) {
+            .header-left .logo-text {
+                display: block;
+                font-size: 16px;
+                letter-spacing: -0.5px;
+            }
+
+            .header {
+                height: 64px;
+                background: transparent;
+                border: none;
+            }
+
+            .header-actions .action-btn:not(.primary) {
+                display: none;
+            }
+
+            .header-actions .action-btn.primary {
+                height: 38px;
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 700;
+                background: var(--bg-glass);
+                border: 1px solid var(--border);
+                color: var(--text-primary);
+            }
+
+            .header-actions .action-btn.primary i {
+                color: var(--accent);
+            }
+
+            .header-divider,
+            .lang-badge,
+            #statsBadge,
+            .editor-toolbar .toolbar-right,
+            .status-bar .status-right {
+                display: none;
+            }
+
+            .editor-toolbar {
+                height: 44px;
+                border-radius: 16px 16px 0 0;
+                margin-top: 10px;
+            }
+
+            .mobile-bottom-bar {
+                display: flex;
+            }
+
+            .main {
+                padding: 15px;
+                padding-bottom: 120px;
+            }
+
+            .status-bar {
+                margin-top: 10px;
+                background: rgba(255, 255, 255, 0.03);
+                border-radius: 12px;
+                padding: 8px 15px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .status-left {
+                justify-content: space-between;
+                width: 100%;
+                opacity: 0.8;
+            }
+
+            .status-item {
+                font-size: 9px;
+            }
+
+            .line-numbers {
+                width: 38px;
+                font-size: 10px;
+            }
+
+            #codeEditor,
+            #viewer {
+                padding: 15px;
+                font-size: 14px;
+            }
+
+            .password-tray.open {
+                bottom: 100px;
+                left: 20px;
+                right: 20px;
+                top: auto;
+                height: auto;
+                padding: 20px;
+                border-radius: 24px;
+                border: 1px solid var(--border);
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <div class="sidebar">
-        <div class="top-actions">
-            <div class="btn" data-label="Yeni (Ctrl+N)" onclick="newPaste()"><i class="fas fa-plus"></i></div>
-            <div class="btn" id="saveBtn" data-label="Kaydet (Ctrl+S)" onclick="savePaste()"><i class="fas fa-save"></i></div>
-            <div class="btn" id="editBtn" data-label="Düzenle" onclick="editPaste()" style="display:none;"><i class="fas fa-pen"></i></div>
-            <div class="btn" id="copyBtn" data-label="Kopyala" onclick="copyCode()" style="display:none;"><i class="fas fa-copy"></i></div>
-            <div class="btn" id="downloadBtn" data-label="İndir" onclick="downloadCode()" style="display:none;"><i class="fas fa-download"></i></div>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div style="display: flex; gap: 15px;">
+                <span class="sidebar-title" id="tabHistory" onclick="switchSidebarTab('history')"
+                    style="cursor: pointer; color: var(--text-primary);">GEÇMİŞ</span>
+                <span class="sidebar-title" id="tabStats" onclick="switchSidebarTab('stats')"
+                    style="cursor: pointer;">STATS</span>
+            </div>
+            <button class="action-btn" onclick="toggleSidebar()"
+                style="padding: 5px; min-width: 32px; border: none; background: transparent;">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
-        <div class="brand-name">MotionStudio</div>
+        <div class="history-list" id="historyList">
+            <!-- History items will be injected here -->
+        </div>
+        <div class="stats-panel" id="statsPanel" style="display: none;">
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <div class="stats-val" id="statChars">0</div>
+                    <div class="stats-lbl">KARAKTER</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-val" id="statKeys">0</div>
+                    <div class="stats-lbl">TUŞ VURUŞU</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-val" id="statWPM">0</div>
+                    <div class="stats-lbl">WPM</div>
+                </div>
+                <div class="stats-card" title="Toplam aktif yazma süresi">
+                    <div class="stats-val" id="statTime">0s</div>
+                    <div class="stats-lbl">SÜRE</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="editor-container">
-        <div class="badge" id="langBadge">DRAFT</div>
-        <div class="line-numbers" id="lineNos">1</div>
-        <textarea id="codeEditor" spellcheck="false" placeholder="Kodunuzu buraya yapıştırın..." oninput="updateLineNumbers()" onscroll="syncScroll()"></textarea>
-        <pre id="viewer" onscroll="syncScroll()"><code id="codeBlock"></code></pre>
+    <!-- Drop Overlay -->
+    <div class="drop-overlay" id="dropOverlay">
+        <i class="fas fa-cloud-upload-alt drop-icon"></i>
+        <div class="drop-text">Dosyayı Bırak ve Yükle</div>
     </div>
 
-    <div id="toast">Bildirim</div>
+    <!-- Loading Screen -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-logo"><i class="fas fa-code"></i></div>
+        <div class="loading-text">Mostebin yükleniyor...</div>
+        <div class="loading-bar">
+            <div class="loading-bar-fill"></div>
+        </div>
+    </div>
 
-<script>
-    const editor = document.getElementById('codeEditor');
-    const lineNos = document.getElementById('lineNos');
-    const viewer = document.getElementById('viewer');
-    const codeBlock = document.getElementById('codeBlock');
-    const langBadge = document.getElementById('langBadge');
-    const toast = document.getElementById('toast');
+    <!-- Background Orbs -->
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
 
-    // API URL - Vercel üzerinde /api dizinine gider
-    const API_URL = "/api";
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-code"></i></div>
+                <span class="logo-text">Mostebin</span>
+            </div>
+            <div class="header-divider"></div>
+            <div class="lang-badge" id="langBadge">
+                <div class="dot"></div>
+                <span id="langText">DRAFT</span>
+            </div>
+            <div class="lang-badge" id="statsBadge"
+                style="cursor: pointer; background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3);"
+                onclick="toggleSidebar() && switchSidebarTab('stats')">
+                <i class="fas fa-tachometer-alt" style="color: var(--accent);"></i>
+                <span id="cpmText" style="color: var(--text-primary); margin-left: 5px;">0 CPM</span>
+            </div>
+        </div>
 
-    window.onload = checkUrl;
-    window.onhashchange = checkUrl;
+        <div class="header-actions">
+            <button class="mobile-menu-btn" onclick="toggleSidebar()" id="mobileMenuBtn" data-tip="Geçmiş">
+                <i class="fas fa-history"></i>
+            </button>
+            <button class="action-btn" id="newBtn" onclick="newPaste()" data-tip="Ctrl+N">
+                <i class="fas fa-plus"></i>
+                <span>Yeni</span>
+            </button>
+            <button class="action-btn" id="encryptToggleBtn" onclick="togglePasswordTray()" data-tip="Şifreleme">
+                <i class="fas fa-shield-alt"></i>
+                <span>Şifrele</span>
+            </button>
+            <button class="action-btn primary" id="saveBtn" onclick="savePaste()" data-tip="Ctrl+S">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Kaydet & Paylaş</span>
+            </button>
+            <button class="action-btn hidden" id="editBtn" onclick="editPaste()" data-tip="Düzenle">
+                <i class="fas fa-pen"></i>
+                <span>Düzenle</span>
+            </button>
+            <button class="action-btn hidden" id="copyBtn" onclick="copyCode()" data-tip="Kopyala">
+                <i class="fas fa-copy"></i>
+                <span>Kopyala</span>
+            </button>
+            <button class="action-btn hidden" id="downloadBtn" onclick="downloadCode()" data-tip="İndir">
+                <i class="fas fa-download"></i>
+                <span>İndir</span>
+            </button>
+        </div>
+    </header>
 
-    async function checkUrl() {
-        const id = window.location.hash.substring(1);
-        if (id && id.length > 2) {
-            showToast("Kod yükleniyor...");
-            try {
-                const res = await fetch(`${API_URL}/get/${id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    showHighlighted(data.content);
-                } else {
-                    showToast("Hata: Kod bulunamadı!");
+    <!-- Password Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-card">
+            <div class="modal-icon" id="modalIcon"><i class="fas fa-lock"></i></div>
+            <div class="modal-title" id="modalTitle">Şifreli Paylaşım</div>
+            <div class="modal-desc" id="modalDesc">Bu kod şifrelenecek. Sadece şifreyi bilenler görebilecek.</div>
+            <div class="modal-input-group" style="position: relative;">
+                <input type="password" class="modal-input" id="modalInput" placeholder="••••••" autocomplete="off">
+                <i class="fas fa-eye password-toggle" id="modalEye"
+                    onclick="toggleVisibility('modalInput', 'modalEye')"></i>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="modalCancel">İptal</button>
+                <button class="modal-btn confirm" id="modalConfirm">Tamam</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Tray -->
+    <div class="password-tray" id="passwordTray">
+        <div class="tray-label">
+            <i class="fas fa-key"></i> ŞİFRE BELİRLE
+        </div>
+        <div class="tray-input-wrapper">
+            <input type="password" class="tray-input" id="trayPassword" placeholder="Paylaşım şifresini girin..."
+                autocomplete="new-password">
+            <i class="fas fa-eye password-toggle" id="trayEye" onclick="toggleVisibility('trayPassword', 'trayEye')"
+                style="right: 10px;"></i>
+        </div>
+        <i class="fas fa-times tray-close" onclick="togglePasswordTray()" title="Kapat"></i>
+    </div>
+
+    <!-- Mobile Bottom Bar -->
+    <div class="mobile-bottom-bar">
+        <button class="bottom-action" onclick="newPaste()">
+            <i class="fas fa-plus"></i>
+            <span>Yeni</span>
+        </button>
+        <button class="bottom-action" onclick="togglePasswordTray()">
+            <i class="fas fa-shield-alt"></i>
+            <span>Şifrele</span>
+        </button>
+        <button class="bottom-action primary" onclick="savePaste()">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </button>
+        <button class="bottom-action" id="bottomCopyBtn" onclick="copyCode()"
+            style="opacity: 0.5; pointer-events: none;">
+            <i class="fas fa-copy"></i>
+            <span>Kopyala</span>
+        </button>
+        <button class="bottom-action" onclick="toggleSidebar()">
+            <i class="fas fa-history"></i>
+            <span>Geçmiş</span>
+        </button>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast">
+        <span class="toast-icon" id="toastIcon"></span>
+        <span id="toastMsg">Bildirim</span>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+        <div class="editor-panel">
+
+            <!-- Share Bar -->
+            <div class="share-bar" id="shareBar">
+                <i class="fas fa-link" style="color: var(--success); font-size: 12px;"></i>
+                <span style="color: var(--text-muted);">Paylaşım linki:</span>
+                <input class="share-url" id="shareUrl" readonly>
+                <button class="share-copy-btn" onclick="copyShareUrl()">
+                    <i class="fas fa-copy"></i> Kopyala
+                </button>
+            </div>
+
+            <!-- Editor Toolbar -->
+            <div class="editor-toolbar">
+                <div class="toolbar-left">
+                    <div class="traffic-light tl-red"></div>
+                    <div class="traffic-light tl-yellow"></div>
+                    <div class="traffic-light tl-green"></div>
+                    <div class="file-tab">
+                        <i class="fas fa-file-code"></i>
+                        <span id="fileTabName">untitled</span>
+                    </div>
+                </div>
+                <div class="toolbar-right">
+                    <span class="cursor-info" id="cursorInfo">Ln 1, Col 1</span>
+                    <span>UTF-8</span>
+                    <span>LF</span>
+                </div>
+            </div>
+
+            <!-- Editor Area -->
+            <div class="editor-area">
+                <div class="line-numbers" id="lineNos">1</div>
+                <textarea id="codeEditor" spellcheck="false"
+                    placeholder="// Kodunuzu buraya yapıştırın veya yazmaya başlayın...&#10;// Ctrl+S ile kaydedin ve paylaşın"
+                    oninput="onEditorInput()" onscroll="syncScroll()" onclick="updateCursorInfo()"
+                    onkeyup="updateCursorInfo()"></textarea>
+                <pre id="viewer" onscroll="syncScroll()"><code id="codeBlock"></code></pre>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-left">
+                    <div class="status-item">
+                        <div class="status-dot"></div>
+                        <span id="statusText">Hazır</span>
+                        <span id="modeBadge"
+                            style="margin-left: 8px; padding: 2px 6px; border-radius: 4px; font-size: 9px; display: none;"></span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-code" style="font-size: 10px;"></i>
+                        <span id="charCount">0 karakter</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-list-ol" style="font-size: 10px;"></i>
+                        <span id="lineCount">1 satır</span>
+                    </div>
+                </div>
+                <div class="status-right">
+                    <span class="status-item"><kbd class="kbd">Ctrl+S</kbd> Kaydet</span>
+                    <span class="status-item"><kbd class="kbd">Ctrl+N</kbd> Yeni</span>
+                    <span class="status-item"><kbd class="kbd">Tab</kbd> 4 boşluk</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('codeEditor');
+        const lineNos = document.getElementById('lineNos');
+        const viewer = document.getElementById('viewer');
+        const codeBlock = document.getElementById('codeBlock');
+        const langBadge = document.getElementById('langBadge');
+        const langText = document.getElementById('langText');
+        const toast = document.getElementById('toast');
+        const shareBar = document.getElementById('shareBar');
+        const shareUrl = document.getElementById('shareUrl');
+        const fileTabName = document.getElementById('fileTabName');
+        const charCount = document.getElementById('charCount');
+        const lineCount = document.getElementById('lineCount');
+        const cursorInfo = document.getElementById('cursorInfo');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const historyList = document.getElementById('historyList');
+        const passwordModal = document.getElementById('passwordModal');
+        const modalInput = document.getElementById('modalInput');
+        const modalConfirm = document.getElementById('modalConfirm');
+        const modalCancel = document.getElementById('modalCancel');
+        const dropOverlay = document.getElementById('dropOverlay');
+
+        const API_URL = "/api";
+        const LS_KEY = 'mostebin_pastes';
+        const HISTORY_KEY = 'mostebin_history';
+        const ENCRYPTED_PREFIX = '[ENCRYPTED]';
+
+        // ── Stats State ──
+        let stats = {
+            keystrokes: 0,
+            startTime: null,
+            activeTime: 0,
+            lastType: Date.now()
+        };
+        let isLocalMode = false;
+
+        // ── localStorage helpers ──
+        function lsSave(code) {
+            const id = Math.random().toString(36).substring(2, 10);
+            const pastes = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+            pastes[id] = code;
+            localStorage.setItem(LS_KEY, JSON.stringify(pastes));
+            return id;
+        }
+
+        function lsGet(id) {
+            const pastes = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+            return pastes[id] || null;
+        }
+
+        // ── Init ──
+        window.onload = () => {
+            setTimeout(() => {
+                loadingOverlay.classList.add('hidden');
+                checkUrl();
+            }, 800);
+        };
+
+        window.onhashchange = checkUrl;
+
+        async function checkUrl() {
+            const id = window.location.hash.substring(1);
+            if (id && id.length > 2) {
+                showToast('Kod yükleniyor...', 'loading');
+                // Önce localStorage'a bak (local mod)
+                const local = lsGet(id);
+                if (local) {
+                    isLocalMode = true;
+                    let finalContent = local;
+                    if (local.startsWith(ENCRYPTED_PREFIX)) {
+                        const pass = await promptPassword('Bu kod şifreli. Lütfen şifreyi girin:', 'Kodu Çöz');
+                        if (pass === null) {
+                            showToast('Şifre girilmedi', 'error');
+                            return newPaste();
+                        }
+                        try {
+                            const encrypted = local.substring(ENCRYPTED_PREFIX.length);
+                            const bytes = CryptoJS.AES.decrypt(encrypted, pass);
+                            finalContent = bytes.toString(CryptoJS.enc.Utf8);
+                            if (!finalContent) throw new Error();
+                            showToast('Kod başarıyla çözüldü', 'success');
+                        } catch (e) {
+                            showToast('Hatalı şifre!', 'error');
+                            return newPaste();
+                        }
+                    }
+                    showHighlighted(finalContent, id);
+                    showToast('Yerel depodan yüklendi', 'info');
+                    return;
+                }
+                // API'yi dene
+                try {
+                    const res = await fetch(`${API_URL}/get/${id}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        let finalContent = data.content;
+                        if (data.content.startsWith(ENCRYPTED_PREFIX)) {
+                            const pass = await promptPassword('Bu kod şifreli. Lütfen şifreyi girin:', 'Kodu Çöz');
+                            if (pass === null) {
+                                showToast('Şifre girilmedi', 'error');
+                                return newPaste();
+                            }
+                            try {
+                                const encrypted = data.content.substring(ENCRYPTED_PREFIX.length);
+                                const bytes = CryptoJS.AES.decrypt(encrypted, pass);
+                                finalContent = bytes.toString(CryptoJS.enc.Utf8);
+                                if (!finalContent) throw new Error();
+                                showToast('Kod başarıyla çözüldü', 'success');
+                            } catch (e) {
+                                showToast('Hatalı şifre!', 'error');
+                                return newPaste();
+                            }
+                        }
+                        showHighlighted(finalContent, id);
+                    } else {
+                        showToast('Kod bulunamadı!', 'error');
+                        newPaste();
+                    }
+                } catch (err) {
+                    showToast('Bağlantı hatası!', 'error');
                     newPaste();
                 }
-            } catch (err) {
-                showToast("Bağlantı hatası!");
+            } else {
+                newPaste();
             }
-        } else {
-            newPaste();
         }
-    }
 
-    async function savePaste() {
-        const code = editor.value;
-        if (!code.trim()) return showToast("Önce bir şeyler yazmalısın!");
-        
-        showToast("Kaydediliyor...");
-        try {
-            const res = await fetch(`${API_URL}/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: code })
-            });
-            const data = await res.json();
-            if (data.id) {
+        async function savePaste() {
+            const code = editor.value;
+            if (!code.trim()) return showToast('Önce bir şeyler yazmalısın!', 'error');
+
+            const trayPass = document.getElementById('trayPassword').value;
+            const isEncrypted = document.getElementById('passwordTray').classList.contains('open') && trayPass;
+
+            let finalCode = code;
+
+            if (isEncrypted) {
+                if (trayPass.length < 4) return showToast('Şifre en az 4 karakter olmalı!', 'error');
+                const encrypted = CryptoJS.AES.encrypt(code, trayPass).toString();
+                finalCode = ENCRYPTED_PREFIX + encrypted;
+            }
+
+            const saveBtn = document.getElementById('saveBtn');
+            if (saveBtn.classList.contains('loading')) return;
+
+            saveBtn.classList.add('loading');
+            const origHTML = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Kaydediliyor...</span>';
+            showToast('Kaydediliyor...', 'loading');
+
+            // API'yi dene, başarısız olursa localStorage'a kaydet
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3000);
+
+                const res = await fetch(`${API_URL}/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: finalCode }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeout);
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (!data.id) throw new Error('ID yok');
+
+                isLocalMode = false;
                 window.location.hash = data.id;
-                showHighlighted(code);
-                showToast("Başarıyla Kaydedildi!");
+                showHighlighted(code, data.id);
+                addToHistory(data.id, code);
+                showToast('☁️ Sunucuya kaydedildi!', 'success');
+
+            } catch (err) {
+                // API yok → localStorage fallback
+                console.warn('API erişilemedi, localStorage kullanılıyor:', err.message);
+                const id = lsSave(finalCode);
+                isLocalMode = true;
+                window.location.hash = id;
+                showHighlighted(code, id);
+                addToHistory(id, code, true);
+                showToast('💾 Yerel olarak kaydedildi!', 'success');
+            } finally {
+                saveBtn.classList.remove('loading');
+                saveBtn.innerHTML = origHTML;
             }
-        } catch (err) {
-            showToast("Kaydetme hatası!");
         }
-    }
 
-    function showHighlighted(code) {
-        editor.style.display = 'none';
-        viewer.style.display = 'block';
-        editor.value = code;
-        updateLineNumbers();
-        document.getElementById('saveBtn').style.display = 'none';
-        ['editBtn', 'copyBtn', 'downloadBtn'].forEach(id => document.getElementById(id).style.display = 'block');
-        codeBlock.textContent = code;
-        const result = hljs.highlightAuto(code);
-        codeBlock.innerHTML = result.value;
-        langBadge.innerText = (result.language || "text").toUpperCase();
-    }
+        // ── History Management ──
+        function addToHistory(id, code, isLocal = false) {
+            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            // Remove if already exists
+            history = history.filter(item => item.id !== id);
 
-    function editPaste() {
-        editor.style.display = 'block';
-        viewer.style.display = 'none';
-        document.getElementById('saveBtn').style.display = 'block';
-        ['editBtn', 'copyBtn', 'downloadBtn'].forEach(id => document.getElementById(id).style.display = 'none');
-        langBadge.innerText = "EDITING";
-        editor.focus();
-    }
+            const item = {
+                id,
+                excerpt: code.substring(0, 100).replace(/\n/g, ' '),
+                date: new Date().toISOString(),
+                isLocal
+            };
 
-    function newPaste() {
-        if(window.location.hash) {
-            window.location.hash = "";
-            return;
+            history.unshift(item);
+            // Keep last 50
+            if (history.length > 50) history.pop();
+
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            renderHistory();
         }
-        editor.value = "";
-        editPaste();
-        updateLineNumbers();
-    }
 
-    function updateLineNumbers() {
-        const lines = editor.value.split('\n').length;
-        lineNos.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
-    }
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            if (history.length === 0) {
+                historyList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">Henüz geçmiş bulunmuyor.</div>';
+                return;
+            }
 
-    function syncScroll() {
-        const target = editor.style.display === 'none' ? viewer : editor;
-        lineNos.scrollTop = target.scrollTop;
-    }
+            historyList.innerHTML = history.map(item => {
+                const date = new Date(item.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                return `
+                    <div class="history-item" onclick="loadFromHistory('${item.id}')">
+                        <div class="history-item-top">
+                            <span class="history-item-title">${item.id}</span>
+                            <span class="history-item-date">${date}</span>
+                        </div>
+                        <div class="history-item-excerpt">${item.excerpt}</div>
+                        ${item.isLocal ? '<span style="font-size: 8px; color: var(--accent-3);">LOCAL</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
 
-    function copyCode() {
-        navigator.clipboard.writeText(editor.value);
-        showToast("Panoya Kopyalandı!");
-    }
+        function loadFromHistory(id) {
+            window.location.hash = id;
+            if (window.innerWidth <= 768) toggleSidebar();
+        }
 
-    function downloadCode() {
-        const blob = new Blob([editor.value], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `code-${window.location.hash.substring(1) || 'new'}.txt`;
-        a.click();
-    }
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('visible');
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            if (sidebar.classList.contains('open')) {
+                renderHistory();
+                mobileBtn.classList.add('active');
+            } else {
+                mobileBtn.classList.remove('active');
+            }
+        }
 
-    function showToast(msg) {
-        toast.innerText = msg;
-        toast.style.transform = "translateY(0)";
-        setTimeout(() => { toast.style.transform = "translateY(150%)"; }, 3000);
-    }
+        function togglePasswordTray() {
+            const tray = document.getElementById('passwordTray');
+            const btn = document.getElementById('encryptToggleBtn');
+            const input = document.getElementById('trayPassword');
 
-    editor.addEventListener('keydown', e => {
-        if(e.key === 'Tab') {
-            e.preventDefault();
-            const start = editor.selectionStart;
-            editor.value = editor.value.substring(0, start) + "    " + editor.value.substring(editor.selectionEnd);
-            editor.selectionStart = editor.selectionEnd = start + 4;
+            tray.classList.toggle('open');
+            btn.classList.toggle('active');
+
+            if (tray.classList.contains('open')) {
+                input.focus();
+                showToast('Şifreleme modu aktif 🛡️', 'info');
+            } else {
+                input.value = '';
+            }
+        }
+
+        // ── Password Modal Helpers ──
+        function promptPassword(title, btnText) {
+            return new Promise((resolve) => {
+                document.getElementById('modalTitle').textContent = title;
+                modalConfirm.textContent = btnText;
+                modalInput.value = '';
+                passwordModal.classList.add('visible');
+                modalInput.focus();
+
+                const cleanup = () => {
+                    passwordModal.classList.remove('visible');
+                    modalConfirm.removeEventListener('click', onConfirm);
+                    modalCancel.removeEventListener('click', onCancel);
+                    modalInput.removeEventListener('keypress', onKeyPress);
+                };
+
+                const onConfirm = () => {
+                    const val = modalInput.value;
+                    cleanup();
+                    resolve(val || null);
+                };
+
+                const onCancel = () => {
+                    cleanup();
+                    resolve(null);
+                };
+
+                const onKeyPress = (e) => {
+                    if (e.key === 'Enter') onConfirm();
+                };
+
+                modalConfirm.addEventListener('click', onConfirm);
+                modalCancel.addEventListener('click', onCancel);
+                modalInput.addEventListener('keypress', onKeyPress);
+            });
+        }
+
+        function toggleVisibility(inputId, eyeId) {
+            const input = document.getElementById(inputId);
+            const eye = document.getElementById(eyeId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.className = 'fas fa-eye-slash password-toggle';
+            } else {
+                input.type = 'password';
+                eye.className = 'fas fa-eye password-toggle';
+            }
+        }
+
+        function showHighlighted(code, id) {
+            editor.style.display = 'none';
+            viewer.style.display = 'block';
+
+            // Hide encrypt button and close tray when viewing
+            document.getElementById('encryptToggleBtn').style.display = 'none';
+            document.getElementById('bottomCopyBtn').style.opacity = '1';
+            document.getElementById('bottomCopyBtn').style.pointerEvents = 'all';
+            const tray = document.getElementById('passwordTray');
+            if (tray.classList.contains('open')) togglePasswordTray();
+
+            editor.value = code;
             updateLineNumbers();
+            updateStats();
+
+            // Mode Badge
+            const mb = document.getElementById('modeBadge');
+            if (isLocalMode) {
+                mb.textContent = 'LOCAL';
+                mb.style.display = 'inline-block';
+                mb.style.background = 'rgba(245, 158, 11, 0.1)';
+                mb.style.color = '#f59e0b';
+                mb.style.border = '1px solid rgba(245, 158, 11, 0.2)';
+            } else {
+                mb.textContent = 'CLOUD';
+                mb.style.display = 'inline-block';
+                mb.style.background = 'rgba(16, 185, 129, 0.1)';
+                mb.style.color = '#10b981';
+                mb.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+            }
+
+            document.getElementById('saveBtn').classList.add('hidden');
+            document.getElementById('newBtn').classList.remove('hidden');
+            ['editBtn', 'copyBtn', 'downloadBtn'].forEach(btnId => {
+                document.getElementById(btnId).classList.remove('hidden');
+            });
+
+            codeBlock.textContent = code;
+            const result = hljs.highlightAuto(code);
+            codeBlock.innerHTML = result.value;
+
+            const lang = (result.language || 'text').toUpperCase();
+            langText.textContent = lang;
+            langBadge.classList.add('active');
+
+            // File tab name
+            const ext = getExtension(result.language);
+            fileTabName.textContent = `paste-${id}${ext}`;
+
+            // Share bar
+            const url = window.location.href;
+            shareUrl.value = url;
+            shareBar.classList.add('visible');
+
+            // Viewer fade in
+            viewer.classList.add('fade-in');
         }
-        if (e.ctrlKey && e.key === 's') { e.preventDefault(); savePaste(); }
-        if (e.ctrlKey && e.key === 'n') { e.preventDefault(); newPaste(); }
-    });
-</script>
+
+        function getExtension(lang) {
+            const map = {
+                javascript: '.js', typescript: '.ts', python: '.py', java: '.java',
+                cpp: '.cpp', c: '.c', csharp: '.cs', php: '.php', ruby: '.rb',
+                go: '.go', rust: '.rs', swift: '.swift', kotlin: '.kt',
+                html: '.html', css: '.css', json: '.json', xml: '.xml',
+                sql: '.sql', bash: '.sh', shell: '.sh', markdown: '.md',
+                yaml: '.yml', dockerfile: 'Dockerfile'
+            };
+            return map[lang] || '.txt';
+        }
+
+        function editPaste() {
+            editor.style.display = 'block';
+            viewer.style.display = 'none';
+            shareBar.classList.remove('visible');
+
+            document.getElementById('saveBtn').classList.remove('hidden');
+            ['editBtn', 'copyBtn', 'downloadBtn'].forEach(btnId => {
+                document.getElementById(btnId).classList.add('hidden');
+            });
+
+            langText.textContent = 'EDITING';
+            langBadge.classList.remove('active');
+            fileTabName.textContent = 'untitled';
+            editor.focus();
+        }
+
+        function newPaste() {
+            window.location.hash = '';
+            editor.value = '';
+            editor.style.display = 'block';
+            viewer.style.display = 'none';
+            document.getElementById('encryptToggleBtn').style.display = 'flex';
+            document.getElementById('bottomCopyBtn').style.opacity = '0.5';
+            document.getElementById('bottomCopyBtn').style.pointerEvents = 'none';
+
+            document.getElementById('saveBtn').classList.remove('hidden');
+            ['editBtn', 'copyBtn', 'downloadBtn'].forEach(btnId => {
+                document.getElementById(btnId).classList.add('hidden');
+            });
+
+            langText.textContent = 'DRAFT';
+            langBadge.classList.remove('active');
+            fileTabName.textContent = 'untitled';
+            onEditorInput();
+            editor.focus();
+        }
+
+        function onEditorInput() {
+            updateLineNumbers();
+            updateStats();
+
+            // Update dev-stats logic
+            stats.keystrokes++;
+            const now = Date.now();
+            if (now - stats.lastType < 5000) { // If typing within 5 seconds
+                if (!stats.startTime) stats.startTime = now;
+                stats.activeTime += (now - stats.lastType);
+            } else {
+                // Return from idle
+                stats.startTime = now;
+            }
+            stats.lastType = now;
+            updateDevStatsUI();
+        }
+
+        function updateDevStatsUI() {
+            const chars = editor.value.length;
+            const minutes = (stats.activeTime / 1000) / 60 || 0.01;
+            const cpm = Math.round(chars / minutes) || 0;
+            const wpm = Math.round((chars / 5) / minutes) || 0;
+
+            document.getElementById('cpmText').textContent = `${cpm} CPM`;
+            document.getElementById('statChars').textContent = chars;
+            document.getElementById('statKeys').textContent = stats.keystrokes;
+            document.getElementById('statWPM').textContent = wpm;
+            document.getElementById('statTime').textContent = Math.round(stats.activeTime / 1000) + 's';
+        }
+
+        function switchSidebarTab(tab) {
+            const hList = document.getElementById('historyList');
+            const sPanel = document.getElementById('statsPanel');
+            const tHist = document.getElementById('tabHistory');
+            const tStats = document.getElementById('tabStats');
+
+            if (tab === 'history') {
+                hList.style.display = 'block';
+                sPanel.style.display = 'none';
+                tHist.style.color = 'var(--text-primary)';
+                tStats.style.color = 'var(--text-secondary)';
+                renderHistory();
+            } else {
+                hList.style.display = 'none';
+                sPanel.style.display = 'block';
+                tHist.style.color = 'var(--text-secondary)';
+                tStats.style.color = 'var(--text-primary)';
+                updateDevStatsUI();
+            }
+            return true;
+        }
+
+        // ── Drag and Drop ──
+        window.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropOverlay.classList.add('active');
+        });
+
+        window.addEventListener('dragleave', e => {
+            if (e.relatedTarget === null) dropOverlay.classList.remove('active');
+        });
+
+        window.addEventListener('drop', e => {
+            e.preventDefault();
+            dropOverlay.classList.remove('active');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    newPaste();
+                    editor.value = re.target.result;
+                    onEditorInput();
+                    showToast(`${file.name} yüklendi`, 'success');
+
+                    // Auto language from extension
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    const extMap = {
+                        'js': 'javascript', 'ts': 'typescript', 'py': 'python',
+                        'html': 'xml', 'css': 'css', 'json': 'json', 'md': 'markdown',
+                        'c': 'c', 'cpp': 'cpp', 'java': 'java', 'php': 'php', 'rb': 'ruby'
+                    };
+                    if (extMap[ext]) {
+                        const langTrigger = Array.from(document.querySelectorAll('.lang-item'))
+                            .find(el => el.textContent.toLowerCase().includes(extMap[ext]));
+                        if (langTrigger) langTrigger.click();
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineNos.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+        }
+
+        function updateStats() {
+            const code = editor.value;
+            const lines = code.split('\n').length;
+            const chars = code.length;
+            charCount.textContent = `${chars.toLocaleString('tr')} karakter`;
+            lineCount.textContent = `${lines.toLocaleString('tr')} satır`;
+        }
+
+        function updateCursorInfo() {
+            const pos = editor.selectionStart;
+            const text = editor.value.substring(0, pos);
+            const lines = text.split('\n');
+            const ln = lines.length;
+            const col = lines[lines.length - 1].length + 1;
+            cursorInfo.textContent = `Ln ${ln}, Col ${col}`;
+        }
+
+        function syncScroll() {
+            const target = editor.style.display === 'none' ? viewer : editor;
+            lineNos.scrollTop = target.scrollTop;
+        }
+
+        function copyCode() {
+            navigator.clipboard.writeText(editor.value).then(() => {
+                showToast('Panoya kopyalandı!', 'success');
+                const btn = document.getElementById('copyBtn');
+                const icon = btn.querySelector('i');
+                icon.className = 'fas fa-check';
+                setTimeout(() => { icon.className = 'fas fa-copy'; }, 2000);
+            });
+        }
+
+        function copyShareUrl() {
+            navigator.clipboard.writeText(shareUrl.value).then(() => {
+                showToast('Link kopyalandı!', 'success');
+            });
+        }
+
+        function downloadCode() {
+            const id = window.location.hash.substring(1) || 'new';
+            const lang = langText.textContent.toLowerCase();
+            const ext = getExtension(lang === 'draft' || lang === 'editing' ? 'text' : lang);
+            const blob = new Blob([editor.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mostebin-${id}${ext}`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('İndirme başladı!', 'success');
+        }
+
+        // ── Toast ──
+        let toastTimer;
+        function showToast(msg, type = 'info') {
+            clearTimeout(toastTimer);
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle',
+                loading: 'fas fa-spinner fa-spin'
+            };
+            document.getElementById('toastIcon').className = `toast-icon ${icons[type] || icons.info}`;
+            document.getElementById('toastMsg').textContent = msg;
+            toast.className = `${type} show`;
+            toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        // ── Keyboard Shortcuts ──
+
+        editor.addEventListener('keydown', e => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const value = editor.value;
+
+                if (start !== end) {
+                    // Multi-line indentation
+                    const linesStart = value.lastIndexOf('\n', start - 1) + 1;
+                    const linesEnd = value.indexOf('\n', end);
+                    const actualEnd = linesEnd === -1 ? value.length : linesEnd;
+
+                    const selectedText = value.substring(linesStart, actualEnd);
+                    const lines = selectedText.split('\n');
+
+                    if (e.shiftKey) {
+                        // Unindent
+                        const newLines = lines.map(line => line.startsWith('    ') ? line.substring(4) : (line.startsWith('\t') ? line.substring(1) : line));
+                        const newText = newLines.join('\n');
+                        editor.value = value.substring(0, linesStart) + newText + value.substring(actualEnd);
+                        editor.selectionStart = start;
+                        editor.selectionEnd = actualEnd - (selectedText.length - newText.length);
+                    } else {
+                        // Indent
+                        const newLines = lines.map(line => '    ' + line);
+                        const newText = newLines.join('\n');
+                        editor.value = value.substring(0, linesStart) + newText + value.substring(actualEnd);
+                        editor.selectionStart = start + 4;
+                        editor.selectionEnd = actualEnd + (newText.length - selectedText.length);
+                    }
+                } else {
+                    // Single line tab
+                    editor.value = value.substring(0, start) + '    ' + value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = start + 4;
+                }
+                onEditorInput();
+            }
+
+            // Auto-closing
+            const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'" };
+            if (pairs[e.key]) {
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const char = e.key;
+                const close = pairs[char];
+
+                if (start !== end) {
+                    e.preventDefault();
+                    const selected = editor.value.substring(start, end);
+                    editor.value = editor.value.substring(0, start) + char + selected + close + editor.value.substring(end);
+                    editor.selectionStart = start + 1;
+                    editor.selectionEnd = end + 1;
+                } else if (char === close && editor.value[start] === close) {
+                    // Skip if already closed and typing the closer
+                    e.preventDefault();
+                    editor.selectionStart = editor.selectionEnd = start + 1;
+                } else {
+                    // Just insert the pair
+                    e.preventDefault();
+                    editor.value = editor.value.substring(0, start) + char + close + editor.value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = start + 1;
+                }
+                onEditorInput();
+            }
+
+            if (e.ctrlKey && e.key === 's') { e.preventDefault(); savePaste(); }
+            if (e.ctrlKey && e.key === 'n') { e.preventDefault(); newPaste(); }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 's') { e.preventDefault(); savePaste(); }
+            if (e.ctrlKey && e.key === 'n') { e.preventDefault(); newPaste(); }
+        });
+
+        // ── Init stats ──
+        updateLineNumbers();
+        updateStats();
+    </script>
 </body>
+
 </html>
